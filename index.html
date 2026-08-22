@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft Bedrock JSON-UI Studio (Nested Container Engine)</title>
+  <title>Minecraft Bedrock JSON-UI Studio (Parent Padded Stack Engine)</title>
   <link href="https://fonts.cdnfonts.com/css/minecraft-4" rel="stylesheet">
   <style>
     :root {
@@ -26,7 +26,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; user-select: none; }
     body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-    /* Header */
+    /* Top Toolbar */
     header {
       background-color: var(--bg-panel);
       border-bottom: 1px solid var(--border-color);
@@ -86,7 +86,7 @@
 
     /* Left Sidebar */
     .sidebar-left {
-      width: 280px;
+      width: 290px;
       background-color: var(--bg-panel);
       border-right: 1px solid var(--border-color);
       display: flex;
@@ -164,7 +164,6 @@
       image-rendering: pixelated;
     }
 
-    /* Subtle Grid */
     #canvas-wrapper.grid-on {
       background-image: 
         linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
@@ -276,15 +275,17 @@
       width: 100%;
     }
 
-    /* Button Workspace */
+    /* Parent Padded Button Workspace Container */
     #button-workspace {
       position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
       top: 40px;
       pointer-events: auto;
       z-index: 10;
+      border: 1px dashed rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
     }
 
     /* UI Elements */
@@ -368,7 +369,7 @@
     .handle-w  { top: calc(50% - 4px); left: -4px; cursor: ew-resize; }
     .handle-e  { top: calc(50% - 4px); right: -4px; cursor: ew-resize; }
 
-    /* Right Sidebar */
+    /* Right Sidebar: Inspector */
     .sidebar-right {
       width: 320px;
       background-color: var(--bg-panel);
@@ -445,7 +446,7 @@
 
   <!-- Header -->
   <header>
-    <div class="brand">⛏ Bedrock JSON-UI Studio (Nested Container Engine)</div>
+    <div class="brand">⛏ Bedrock JSON-UI Studio (Padded Stack Engine)</div>
     <div class="toolbar-actions">
       <!-- Undo / Redo -->
       <button class="btn" id="btn-undo" onclick="undo()" title="Undo (Ctrl+Z)">↩ Undo</button>
@@ -498,9 +499,9 @@
         </div>
       </div>
 
-      <!-- Adaptive Body & Title Settings -->
+      <!-- Form Body & Stack Box Configuration -->
       <div class="sidebar-section">
-        <div class="section-title">Form Body & Title Settings</div>
+        <div class="section-title">Form Body & Container Padding</div>
         <div class="prop-group">
           <label>ActionFormData Title (§)</label>
           <input type="text" id="inp-form-binding" value="§fCustom Shop§r" oninput="updateTitleFilter(this.value)">
@@ -508,6 +509,17 @@
         <div class="prop-group">
           <label>Menu Identifier Name</label>
           <input type="text" id="inp-menu-name" value="custom_shop" oninput="updateMenuName(this.value)">
+        </div>
+
+        <div class="prop-row">
+          <div class="prop-group">
+            <label>Parent Box Pad (px)</label>
+            <input type="number" id="inp-parent-padding" value="10" min="0" max="30" onchange="updateParentPadding(+this.value)">
+          </div>
+          <div class="prop-group">
+            <label>Button Gap (px)</label>
+            <input type="number" id="inp-button-gap" value="5" min="0" max="20" onchange="updateButtonGap(+this.value)">
+          </div>
         </div>
 
         <div class="toggle-row" style="margin-top: 4px;">
@@ -534,7 +546,7 @@
       </div>
 
       <div class="sidebar-section" style="padding-bottom: 4px;">
-        <div class="section-title">Hierarchy & Layers <small style="font-size:10px; font-weight:normal;">(Shift/Ctrl: Multi-select | Ctrl+D: Clone)</small></div>
+        <div class="section-title">Hierarchy & Layers <small style="font-size:10px; font-weight:normal;">(Shift/Ctrl: Multi | Ctrl+D: Clone)</small></div>
       </div>
 
       <div class="tree-view" id="element-tree"></div>
@@ -561,7 +573,7 @@
           </div>
         </div>
 
-        <!-- Button Workspace -->
+        <!-- Button Workspace with Parent 10px Pad Box -->
         <div id="button-workspace"></div>
       </div>
     </div>
@@ -632,6 +644,8 @@
     let enableBody = true;
     let bodyText = "Choose an item from the list below:";
     let bodyHeight = 28;
+    let parentPadding = 10;
+    let buttonGap = 5;
     let buttonCount = 0;
 
     let zoomScale = 1.5;
@@ -673,7 +687,7 @@
     ];
 
     function recordState() {
-      const state = JSON.stringify({ elements, enableBody, bodyHeight, bodyText, titleFilter, menuName });
+      const state = JSON.stringify({ elements, enableBody, bodyHeight, bodyText, titleFilter, menuName, parentPadding, buttonGap });
       if (historyIndex >= 0 && historyStack[historyIndex] === state) return;
       historyStack = historyStack.slice(0, historyIndex + 1);
       historyStack.push(state);
@@ -692,6 +706,8 @@
         bodyText = data.bodyText || "";
         titleFilter = data.titleFilter || "§fCustom Shop§r";
         menuName = data.menuName || "custom_shop";
+        parentPadding = data.parentPadding !== undefined ? data.parentPadding : 10;
+        buttonGap = data.buttonGap !== undefined ? data.buttonGap : 5;
         applyChromeSettings();
         renderAll();
         updateInspector();
@@ -709,6 +725,8 @@
         bodyText = data.bodyText || "";
         titleFilter = data.titleFilter || "§fCustom Shop§r";
         menuName = data.menuName || "custom_shop";
+        parentPadding = data.parentPadding !== undefined ? data.parentPadding : 10;
+        buttonGap = data.buttonGap !== undefined ? data.buttonGap : 5;
         applyChromeSettings();
         renderAll();
         updateInspector();
@@ -721,7 +739,6 @@
       document.getElementById('btn-redo').disabled = (historyIndex >= historyStack.length - 1);
     }
 
-    // Keyboard Shortcuts
     window.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
@@ -810,6 +827,17 @@
       recordState();
     }
 
+    function updateParentPadding(val) {
+      parentPadding = Math.max(0, Math.min(40, val));
+      applyChromeSettings();
+      recordState();
+    }
+
+    function updateButtonGap(val) {
+      buttonGap = Math.max(0, Math.min(30, val));
+      recordState();
+    }
+
     function toggleBody(enabled) {
       enableBody = enabled;
       applyChromeSettings();
@@ -843,11 +871,17 @@
       document.getElementById('body-settings-wrapper').style.display = enableBody ? 'flex' : 'none';
       document.getElementById('chk-enable-body').checked = enableBody;
 
+      // Adjust padded container boundary
       const wsTop = enableBody ? (8 + bodyHeight + 4) : 8;
       workspace.style.top = wsTop + 'px';
+      workspace.style.left = parentPadding + 'px';
+      workspace.style.right = parentPadding + 'px';
+      workspace.style.bottom = parentPadding + 'px';
 
       document.getElementById('inp-form-binding').value = titleFilter;
       document.getElementById('inp-menu-name').value = menuName;
+      document.getElementById('inp-parent-padding').value = parentPadding;
+      document.getElementById('inp-button-gap').value = buttonGap;
       document.getElementById('inp-body-text').value = bodyText;
       document.getElementById('inp-body-height').value = bodyHeight;
     }
@@ -860,12 +894,10 @@
         id,
         name: isButton ? `button_${buttonCount}` : `${type}_${elements.length + 1}`,
         type,
-        x: 16,
-        y: 8,
+        x: 0,
+        y: 0,
         w: 64,
         h: 64,
-        paddingW: 69,
-        paddingH: 69,
         iconSize: 32,
         layer: isButton ? 4 : type === 'divider' ? 10 : 2,
         alpha: 1.0,
@@ -887,10 +919,8 @@
       };
 
       if (type === 'divider') {
-        newEl.w = 280;
+        newEl.w = 260;
         newEl.h = 5;
-        newEl.x = 8;
-        newEl.y = 8;
       }
 
       newEl.x = snap(newEl.x);
@@ -922,6 +952,7 @@
         div.style.zIndex = el.layer;
         div.style.color = el.textColor || '#ffffff';
 
+        // 1. Background Layer (3:3 default 9-slice)
         const bgLayer = document.createElement('div');
         bgLayer.className = 'ui-bg-layer';
         bgLayer.style.opacity = el.alpha;
@@ -940,6 +971,7 @@
         }
         div.appendChild(bgLayer);
 
+        // 2. Content Layer
         const contentLayer = document.createElement('div');
         contentLayer.className = 'ui-content-layer';
 
@@ -956,6 +988,7 @@
         }
         div.appendChild(contentLayer);
 
+        // 3. Resize Handles
         if (isSelected && selectedIds.length === 1) {
           ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].forEach(dir => {
             const handle = document.createElement('div');
@@ -1021,6 +1054,7 @@
           });
         }
 
+        // 4. Drag Movement
         div.onpointerdown = (e) => {
           if (e.target.classList.contains('resize-handle')) return;
           e.stopPropagation();
@@ -1054,8 +1088,8 @@
                 let nextX = snap(init.x + deltaX);
                 let nextY = snap(init.y + deltaY);
 
-                nextX = Math.max(0, Math.min(canvas.clientWidth - targetEl.w, nextX));
-                nextY = Math.max(0, Math.min(canvas.clientHeight - targetEl.h, nextY));
+                nextX = Math.max(0, Math.min(workspace.clientWidth - targetEl.w, nextX));
+                nextY = Math.max(0, Math.min(workspace.clientHeight - targetEl.h, nextY));
 
                 targetEl.x = nextX;
                 targetEl.y = nextY;
@@ -1235,11 +1269,11 @@
           </div>
           <div class="prop-row">
             <div class="prop-group">
-              <label>Width ($button_size X)</label>
+              <label>Width</label>
               <input type="number" id="inp-w" value="${el.w}" onchange="updateProp('w', snap(+this.value))">
             </div>
             <div class="prop-group">
-              <label>Height ($button_size Y)</label>
+              <label>Height</label>
               <input type="number" id="inp-h" value="${el.h}" onchange="updateProp('h', snap(+this.value))">
             </div>
           </div>
@@ -1341,14 +1375,14 @@
       updateInspector();
     }
 
-    // Centered Nested Container Exporter (With precise uniform padding & 100%c auto-centering)
+    // Padded Parent Stack Generator: Clean zero-edge button padding with auto-centered stacks
     function generateButtonPanelJson() {
       const panelName = `my_custom_panel_${menuName}`;
 
-      // 1. Sort elements top-to-bottom, left-to-right
+      // 1. Sort top-to-bottom, left-to-right
       const sorted = [...elements].sort((a, b) => a.y - b.y || a.x - b.x);
 
-      // 2. Group into distinct row tiers
+      // 2. Cluster into rows
       const rows = [];
       sorted.forEach(el => {
         let placed = false;
@@ -1363,15 +1397,14 @@
         if (!placed) rows.push([el]);
       });
 
-      // 3. Build uniform nested row stacks
+      // 3. Build centered row stacks with uniform button gap spacing
       const rowControls = rows.map((rowItems, rowIndex) => {
         rowItems.sort((a, b) => a.x - b.x);
 
         const itemsControls = rowItems.map((el, i) => {
           if (el.type === 'custom_button') {
-            // Precise uniform 5px cell padding on each button
-            const padW = el.w + 5;
-            const padH = el.h + 5;
+            const padW = el.w + buttonGap;
+            const padH = el.h + buttonGap;
 
             return {
               [`${el.name}@server_form.custom_button`]: {
