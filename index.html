@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft Bedrock JSON-UI Studio</title>
+  <title>Minecraft Bedrock JSON-UI Studio (BakaUI Template Edition)</title>
   <link href="https://fonts.cdnfonts.com/css/minecraft-4" rel="stylesheet">
   <style>
     :root {
@@ -26,7 +26,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; user-select: none; }
     body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-    /* Header Toolbar */
+    /* Header */
     header {
       background-color: var(--bg-panel);
       border-bottom: 1px solid var(--border-color);
@@ -86,7 +86,7 @@
 
     /* Left Sidebar */
     .sidebar-left {
-      width: 260px;
+      width: 270px;
       background-color: var(--bg-panel);
       border-right: 1px solid var(--border-color);
       display: flex;
@@ -164,12 +164,64 @@
       image-rendering: pixelated;
     }
 
-    /* Subtle Grid Overlay */
     #canvas-wrapper.grid-on {
       background-image: 
         linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
         linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
       background-size: var(--grid-size) var(--grid-size);
+    }
+
+    /* Fixed Template Chrome Overlay (Rendered to match BakaUI) */
+    .template-chrome {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 50;
+    }
+    .chrome-label {
+      position: absolute;
+      top: -26px;
+      left: 9px;
+      font-family: 'Minecraft', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 1px 1px 0px rgba(0,0,0,0.85);
+    }
+    .chrome-divider {
+      position: absolute;
+      top: 0;
+      left: -9px;
+      right: -9px;
+      height: 5px;
+      background-image: url('textures/bakaui/custom_bg_divider.png');
+      background-size: 100% 100%;
+      image-rendering: pixelated;
+    }
+    .chrome-close {
+      position: absolute;
+      top: -20px;
+      right: -5px;
+      width: 14px;
+      height: 14px;
+      background-image: url('textures/bakaui/close_button.png');
+      background-size: 100% 100%;
+      image-rendering: pixelated;
+    }
+    .chrome-body {
+      position: absolute;
+      top: 8px;
+      left: 0;
+      right: 0;
+      height: 28px;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      font-family: 'Minecraft', monospace;
+      font-size: 11px;
+      color: #e0e0e0;
+      border: 1px solid rgba(255,255,255,0.05);
     }
 
     /* UI Elements */
@@ -186,7 +238,6 @@
       outline-offset: 1px;
     }
 
-    /* Background Layer (Independent Opacity) */
     .ui-bg-layer {
       position: absolute;
       inset: 0;
@@ -197,7 +248,6 @@
       z-index: 1;
     }
 
-    /* Content Layer (Solid 100% Text & Icon) */
     .ui-content-layer {
       position: relative;
       z-index: 2;
@@ -210,18 +260,18 @@
       overflow: hidden;
     }
 
-    /* Fonts */
     .mc-font-ten { font-family: 'Minecraft', monospace; font-weight: 700; letter-spacing: 0.5px; }
     .mc-font-regular { font-family: 'Minecraft', monospace; font-weight: 400; }
 
-    /* Button Structure */
     .btn-container {
       position: relative;
       width: 100%;
       height: 100%;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 3px;
     }
 
     .btn-icon {
@@ -234,7 +284,6 @@
     }
 
     .btn-label-text {
-      position: absolute;
       white-space: nowrap;
       pointer-events: none;
     }
@@ -334,13 +383,13 @@
 
   <!-- Header -->
   <header>
-    <div class="brand">⛏ Bedrock JSON-UI Studio</div>
+    <div class="brand">⛏ Bedrock JSON-UI Studio (BakaUI Engine)</div>
     <div class="toolbar-actions">
       <!-- Undo / Redo -->
       <button class="btn" id="btn-undo" onclick="undo()" title="Undo (Ctrl+Z)">↩ Undo</button>
       <button class="btn" id="btn-redo" onclick="redo()" title="Redo (Ctrl+Y)">↪ Redo</button>
 
-      <!-- Zoom Dropdown -->
+      <!-- Zoom -->
       <div class="control-pill">
         <span>Zoom</span>
         <select id="sel-zoom" onchange="setZoomScale(+this.value)">
@@ -353,7 +402,7 @@
         </select>
       </div>
 
-      <!-- Grid Snap Selection -->
+      <!-- Grid Snap -->
       <div class="control-pill">
         <label><input type="checkbox" id="chk-grid" checked onchange="toggleGrid(this.checked)"> Grid Snap</label>
         <select id="sel-grid-size" onchange="setGridSize(+this.value)">
@@ -364,12 +413,14 @@
         </select>
       </div>
 
-      <button class="btn" onclick="setPreset(432, 243)">Wide (432x243)</button>
-      <button class="btn" onclick="setPreset(350, 200)">Standard (350x200)</button>
-      <button class="btn" onclick="setPreset(322, 200)">Compact (322x200)</button>
-      <button class="btn" onclick="setPreset(270, 185)">Mini (270x185)</button>
+      <!-- Template Presets matching your server_form.json -->
+      <button class="btn" onclick="setPreset(350, 200)">Default (350x200)</button>
+      <button class="btn" onclick="setPreset(322.5, 200)">Cosmetic/Shop (322.5x200)</button>
+      <button class="btn" onclick="setPreset(300, 185)">Perks (300x185)</button>
+      <button class="btn" onclick="setPreset(270, 185)">Dragon/Rank (270x185)</button>
+
       <button class="btn" onclick="openPreviewModal()">🔍 Preview JSON</button>
-      <button class="btn btn-primary" onclick="openExportModal()">⚡ Export JSON-UI</button>
+      <button class="btn btn-primary" onclick="openExportModal()">⚡ Export for server_form.json</button>
     </div>
   </header>
 
@@ -381,22 +432,24 @@
       <div class="sidebar-section">
         <div class="section-title">Add Elements</div>
         <div class="component-grid">
-          <button class="comp-btn" onclick="addElement('panel')">🔲 Panel</button>
-          <button class="comp-btn" onclick="addElement('image')">🖼 Image</button>
-          <button class="comp-btn" onclick="addElement('title')">🏷 Title Bar</button>
-          <button class="comp-btn" onclick="addElement('body')">📄 Body Label</button>
-          <button class="comp-btn" onclick="addElement('button')">🔘 Action Button</button>
-          <button class="comp-btn" onclick="addElement('divider')">➖ Divider</button>
-          <button class="comp-btn" onclick="addElement('close')">❌ Close Btn</button>
+          <button class="comp-btn" onclick="addElement('custom_button')">🔘 Square Button</button>
+          <button class="comp-btn" onclick="addElement('custom_button_menu')">🔘 Slim Menu Btn</button>
+          <button class="comp-btn" onclick="addElement('custom_button_shop')">🔘 Shop Card Btn</button>
+          <button class="comp-btn" onclick="addElement('image')">🖼 Custom Image</button>
+          <button class="comp-btn" onclick="addElement('divider')">➖ Divider Bar</button>
         </div>
       </div>
 
       <div class="sidebar-section">
         <div class="section-title">ActionFormData Form Binding</div>
         <div class="prop-group">
-          <label>Form Title Binding Filter</label>
-          <input type="text" id="inp-form-binding" value="§fCustom Shop§r" oninput="updateTitleFilter(this.value)" placeholder="e.g. §fCustom Shop§r">
-          <small style="color:var(--text-muted); font-size:10px;">Matches the title in ActionFormData to display this layout.</small>
+          <label>Form Title Filter Check</label>
+          <input type="text" id="inp-form-binding" value="§fCustom Shop§r" oninput="updateTitleFilter(this.value)">
+          <small style="color:var(--text-muted); font-size:10px;">The exact title your script passes to open this UI.</small>
+        </div>
+        <div class="prop-group">
+          <label>Menu Identifier / Name</label>
+          <input type="text" id="inp-menu-name" value="custom_shop" oninput="updateMenuName(this.value)">
         </div>
       </div>
 
@@ -409,7 +462,15 @@
 
     <!-- Center Viewport with Background -->
     <div class="viewport" id="viewport">
-      <div id="canvas-wrapper" class="grid-on" style="width: 350px; height: 200px;"></div>
+      <div id="canvas-wrapper" class="grid-on" style="width: 322.5px; height: 200px;">
+        <!-- Fixed BakaUI Chrome Template overlay -->
+        <div class="template-chrome">
+          <div class="chrome-label" id="disp-chrome-label">§fCustom Shop§r</div>
+          <div class="chrome-divider"></div>
+          <div class="chrome-close"></div>
+          <div class="chrome-body">Form Body Description Text (#form_text)</div>
+        </div>
+      </div>
     </div>
 
     <!-- Right Sidebar: Properties & Texture Selector -->
@@ -434,7 +495,7 @@
       </div>
       <div class="modal-body">
         <div class="prop-group">
-          <label class="section-title">Active Namespace Hierarchy</label>
+          <label class="section-title">Generated Panel Code</label>
           <textarea class="code-box" id="code-preview" style="height: 360px;" readonly></textarea>
         </div>
       </div>
@@ -445,17 +506,17 @@
   <div class="modal-overlay" id="export-modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 style="font-size: 14px;">Minecraft Bedrock JSON-UI Output</h3>
+        <h3 style="font-size: 14px;">Minecraft Bedrock JSON-UI Output for server_form.json</h3>
         <button class="btn" onclick="closeExportModal()">✕</button>
       </div>
       <div class="modal-body">
         <div class="prop-group">
-          <label class="section-title">1. UI Namespace File: RP/ui/<span id="out-ns-name">custom_shop</span>.json</label>
-          <textarea class="code-box" id="code-namespace" readonly></textarea>
+          <label class="section-title">1. Paste at the bottom of server_form.json (Button Panel Definition)</label>
+          <textarea class="code-box" id="code-btn-panel" readonly></textarea>
         </div>
         <div class="prop-group">
-          <label class="section-title">2. server_form.json (Insert inside long_form.controls array)</label>
-          <textarea class="code-box" id="code-server-form" style="height: 110px;" readonly></textarea>
+          <label class="section-title">2. Paste inside long_form.controls in server_form.json (Dialog Panel Entry)</label>
+          <textarea class="code-box" id="code-dialog-panel" style="height: 160px;" readonly></textarea>
         </div>
       </div>
     </div>
@@ -469,14 +530,13 @@
     let elements = [];
     let selectedIds = [];
     let titleFilter = "§fCustom Shop§r";
-    let namespace = "custom_shop";
+    let menuName = "custom_shop";
     let buttonCount = 0;
 
     let zoomScale = 1.6;
     let gridSnap = true;
     let gridSize = 8;
 
-    // History Stack for Undo / Redo
     let historyStack = [];
     let historyIndex = -1;
     const MAX_HISTORY = 50;
@@ -508,8 +568,7 @@
       { name: "Custom BG Divider", path: "textures/bakaui/custom_bg_divider" },
       { name: "Custom BG Dark", path: "textures/bakaui/custom_bg_dark" },
       { name: "Custom BG Black", path: "textures/bakaui/custom_bg" },
-      { name: "Close Button", path: "textures/bakaui/close_button" },
-      { name: "Close Button Hover", path: "textures/bakaui/close_button_hover" }
+      { name: "Close Button", path: "textures/bakaui/close_button" }
     ];
 
     function recordState() {
@@ -591,77 +650,48 @@
 
     function updateTitleFilter(val) {
       titleFilter = val;
+      document.getElementById('disp-chrome-label').innerText = val;
     }
 
-    async function autoFetchNineSlice(el) {
-      if (!el.texture) return;
-      try {
-        const res = await fetch(`${el.texture}.json`);
-        if (res.ok) {
-          const data = await res.json();
-          const ns = data.nineslice_size;
-          if (ns !== undefined) {
-            if (typeof ns === 'number') {
-              el.sliceTop = el.sliceRight = el.sliceBottom = el.sliceLeft = ns;
-            } else if (Array.isArray(ns)) {
-              if (ns.length === 4) {
-                el.sliceLeft = ns[0];
-                el.sliceTop = ns[1];
-                el.sliceRight = ns[2];
-                el.sliceBottom = ns[3];
-              } else if (ns.length === 2) {
-                el.sliceLeft = el.sliceRight = ns[0];
-                el.sliceTop = el.sliceBottom = ns[1];
-              }
-            }
-            el.useNineSlice = true;
-            renderCanvas();
-            updateInspector();
-          }
-        }
-      } catch (err) {}
+    function updateMenuName(val) {
+      menuName = val.toLowerCase().replace(/[^a-z0-9_]/g, '_');
     }
 
     function addElement(type) {
       const id = 'el_' + Date.now();
+      const isButton = type.startsWith('custom_button');
+      
       let newEl = {
         id,
-        name: `${type}_${elements.length + 1}`,
+        name: isButton ? `button_${buttonCount}` : `${type}_${elements.length + 1}`,
         type,
         x: 16,
-        y: 16,
-        w: 96,
-        h: 32,
-        layer: type === 'panel' ? 1 : type === 'image' ? 2 : type === 'divider' ? 10 : 4,
+        y: 48, // Placed below the body text area
+        w: type === 'custom_button_menu' ? 127.5 : type === 'custom_button_shop' ? 128 : 64,
+        h: type === 'custom_button_menu' ? 20 : 64,
+        paddingW: type === 'custom_button_menu' ? 137.5 : type === 'custom_button_shop' ? 133 : 69,
+        paddingH: type === 'custom_button_menu' ? 25 : type === 'custom_button_shop' ? 69 : 69,
+        iconSize: type === 'custom_button_menu' ? 16 : 32,
+        layer: isButton ? 4 : type === 'divider' ? 10 : 2,
         alpha: 1.0,
-        text: type === 'title' ? 'Menu Title' : type === 'body' ? 'Sample description text...' : type === 'button' ? 'Button' : '',
+        text: isButton ? `Option ${buttonCount}` : '',
         fontType: 'MinecraftTen',
         fontSize: 1.0,
-        textColor: '#ffffff',
-        mcColorCode: '§f',
+        textColor: '#000000',
+        mcColorCode: '§0',
         shadow: true,
-        textAlignment: type === 'body' ? 'left' : 'center',
-        textOffsetX: 0,
-        textOffsetY: 20,
-        iconOffsetX: 0,
-        iconOffsetY: -6,
-        texture: type === 'button' ? 'textures/bakaui/button_light' : type === 'divider' ? 'textures/bakaui/custom_bg_divider' : type === 'close' ? 'textures/bakaui/close_button' : 'textures/bakaui/custom_bg_dark',
+        texture: isButton ? 'textures/bakaui/button_light' : type === 'divider' ? 'textures/bakaui/custom_bg_divider' : 'textures/bakaui/custom_bg_dark',
         iconTexture: 'textures/bakaui/trash',
-        collectionIndex: type === 'button' ? buttonCount++ : null,
-        useNineSlice: type === 'button' || type === 'panel' || type === 'divider',
-        sliceTop: 4,
-        sliceRight: 4,
-        sliceBottom: 4,
-        sliceLeft: 4,
+        collectionIndex: isButton ? buttonCount++ : null,
         visible: true
       };
 
-      if (type === 'panel') { newEl.w = 320; newEl.h = 180; newEl.x = 16; newEl.y = 10; }
-      if (type === 'title') { newEl.w = 320; newEl.h = 24; newEl.x = 16; newEl.y = 10; newEl.fontSize = 1.2; newEl.useNineSlice = false; }
-      if (type === 'body') { newEl.w = 288; newEl.h = 24; newEl.x = 32; newEl.y = 40; newEl.fontType = 'MinecraftRegular'; newEl.useNineSlice = false; }
-      if (type === 'divider') { newEl.w = 320; newEl.h = 5; newEl.x = 16; newEl.y = 36; newEl.layer = 10; }
-      if (type === 'close') { newEl.w = 14; newEl.h = 14; newEl.x = 320; newEl.y = 14; newEl.layer = 64; newEl.useNineSlice = false; }
-      if (type === 'button') { newEl.w = 64; newEl.h = 64; newEl.x = 32 + (newEl.collectionIndex * 72); newEl.y = 80; }
+      if (type === 'divider') {
+        newEl.w = 300;
+        newEl.h = 5;
+        newEl.x = 10;
+        newEl.y = 40;
+      }
 
       newEl.x = snap(newEl.x);
       newEl.y = snap(newEl.y);
@@ -670,14 +700,15 @@
 
       elements.push(newEl);
       selectedIds = [id];
-      autoFetchNineSlice(newEl);
       recordState();
       renderAll();
       updateInspector();
     }
 
     function renderCanvas() {
-      canvas.innerHTML = '';
+      // Remove old element nodes while preserving fixed template chrome
+      canvas.querySelectorAll('.ui-element').forEach(n => n.remove());
+
       elements.forEach(el => {
         if (!el.visible) return;
 
@@ -692,50 +723,34 @@
         div.style.zIndex = el.layer;
         div.style.color = el.textColor || '#ffffff';
 
-        // 1. Background Texture Layer (Independent Opacity)
+        // 1. Background Texture Layer (uses 9-slice styling)
         const bgLayer = document.createElement('div');
         bgLayer.className = 'ui-bg-layer';
         bgLayer.style.opacity = el.alpha;
 
-        if (el.useNineSlice && el.texture) {
-          const t = el.sliceTop || 4;
-          const r = el.sliceRight || 4;
-          const b = el.sliceBottom || 4;
-          const l = el.sliceLeft || 4;
-
+        if (el.texture) {
           bgLayer.style.borderStyle = 'solid';
-          bgLayer.style.borderWidth = `${t}px ${r}px ${b}px ${l}px`;
+          bgLayer.style.borderWidth = '4px';
           bgLayer.style.borderImageSource = `url('${el.texture}.png')`;
-          bgLayer.style.borderImageSlice = `${t} ${r} ${b} ${l} fill`;
+          bgLayer.style.borderImageSlice = '4 fill';
           bgLayer.style.borderImageRepeat = 'stretch';
-          bgLayer.style.backgroundImage = 'none';
-        } else if (el.texture) {
-          bgLayer.style.borderStyle = 'none';
-          bgLayer.style.borderWidth = '0px';
-          bgLayer.style.borderImageSource = 'none';
-          bgLayer.style.backgroundImage = `url('${el.texture}.png')`;
         }
         div.appendChild(bgLayer);
 
-        // 2. Content Layer
+        // 2. Content Layer (Solid Text / Icon)
         const contentLayer = document.createElement('div');
         contentLayer.className = 'ui-content-layer';
 
         const fontClass = el.fontType === 'MinecraftTen' ? 'mc-font-ten' : 'mc-font-regular';
         const shadowStyle = el.shadow ? 'text-shadow: 1px 1px 0px rgba(0,0,0,0.85);' : '';
 
-        if (el.type === 'button') {
+        if (el.type.startsWith('custom_button')) {
           contentLayer.innerHTML = `
             <div class="btn-container">
-              <div class="btn-icon" style="transform: translate(${el.iconOffsetX || 0}px, ${el.iconOffsetY || 0}px); background-image: url('${el.iconTexture || 'textures/bakaui/trash'}.png');"></div>
-              <div class="btn-label-text ${fontClass}" style="transform: translate(${el.textOffsetX || 0}px, ${el.textOffsetY || 0}px); font-size:${11 * el.fontSize}px; ${shadowStyle}">${el.text}</div>
+              <div class="btn-icon" style="background-image: url('${el.iconTexture || 'textures/bakaui/trash'}.png'); width:${el.iconSize || 32}px; height:${el.iconSize || 32}px;"></div>
+              <div class="btn-label-text ${fontClass}" style="font-size:${10 * el.fontSize}px; ${shadowStyle}">${el.text}</div>
             </div>
           `;
-        } else if (el.type === 'title' || el.type === 'body') {
-          contentLayer.innerHTML = `<span class="${fontClass}" style="font-size:${12 * el.fontSize}px; ${shadowStyle}">${el.text || ''}</span>`;
-          contentLayer.style.justifyContent = el.textAlignment === 'left' ? 'flex-start' : el.textAlignment === 'right' ? 'flex-end' : 'center';
-        } else if (el.type === 'close') {
-          contentLayer.innerHTML = `<span style="font-size: 9px; font-weight: bold;">✕</span>`;
         }
         div.appendChild(contentLayer);
 
@@ -805,7 +820,7 @@
           });
         }
 
-        // 4. Element Drag Movement
+        // 4. Drag Engine
         div.onpointerdown = (e) => {
           if (e.target.classList.contains('resize-handle')) return;
           e.stopPropagation();
@@ -957,13 +972,7 @@
         inspectorContent.innerHTML = `
           <div class="prop-card">
             <div class="prop-card-title">Multi-Selection Action</div>
-            <p style="font-size: 12px; color: var(--text-muted);">${selectedIds.length} elements selected together. You can drag them simultaneously on the canvas.</p>
-            <div class="prop-group" style="margin-top:8px;">
-              <label>Bulk Text Color (§)</label>
-              <select onchange="updateTextColor(this.value)">
-                ${MC_COLORS.map(c => `<option value="${c.hex}" style="color:${c.hex}; background:#1a1e26; font-weight:bold;">${c.name}</option>`).join('')}
-              </select>
-            </div>
+            <p style="font-size: 12px; color: var(--text-muted);">${selectedIds.length} elements selected together. You can drag them simultaneously.</p>
             <button class="btn btn-danger" style="margin-top: 10px;" onclick="deleteSelected()">🗑 Delete Selected (${selectedIds.length})</button>
           </div>
         `;
@@ -975,55 +984,32 @@
 
       badge.innerText = `${el.type.toUpperCase()}`;
 
-      let textCardHtml = '';
-      if (el.type === 'button' || el.type === 'title' || el.type === 'body') {
-        textCardHtml = `
+      let buttonSpecificHtml = '';
+      if (el.type.startsWith('custom_button')) {
+        buttonSpecificHtml = `
           <div class="prop-card">
-            <div class="prop-card-title">${el.type === 'button' ? 'Button Label & Alignment' : el.type === 'title' ? 'ActionForm Title' : 'Body Description'}</div>
+            <div class="prop-card-title">Button Template Parameters</div>
             <div class="prop-group">
-              <label>${el.type === 'button' ? 'Button Text' : el.type === 'title' ? 'Title Text' : 'Body Text'}</label>
+              <label>Preview Text</label>
               <input type="text" value="${el.text}" onchange="updateProp('text', this.value)">
-            </div>
-            
-            ${el.type === 'button' ? `
-              <div class="prop-group">
-                <label>Text Position Inside Button (Offset X / Y)</label>
-                <div class="prop-row">
-                  <input type="number" title="Offset X" value="${el.textOffsetX || 0}" onchange="updateProp('textOffsetX', +this.value)">
-                  <input type="number" title="Offset Y" value="${el.textOffsetY || 0}" onchange="updateProp('textOffsetY', +this.value)">
-                </div>
-              </div>
-              <div class="prop-group">
-                <label>Icon Position (Offset X / Y)</label>
-                <div class="prop-row">
-                  <input type="number" title="Icon X" value="${el.iconOffsetX || 0}" onchange="updateProp('iconOffsetX', +this.value)">
-                  <input type="number" title="Icon Y" value="${el.iconOffsetY || 0}" onchange="updateProp('iconOffsetY', +this.value)">
-                </div>
-              </div>
-            ` : ''}
-
-            <div class="prop-group">
-              <label>Minecraft Color Code (§)</label>
-              <select onchange="updateTextColor(this.value)">
-                ${MC_COLORS.map(c => `<option value="${c.hex}" ${el.textColor.toLowerCase() === c.hex.toLowerCase() ? 'selected' : ''} style="color:${c.hex}; background:#1a1e26; font-weight:bold;">${c.name}</option>`).join('')}
-              </select>
             </div>
             <div class="prop-row">
               <div class="prop-group">
-                <label>Font Type</label>
-                <select onchange="updateProp('fontType', this.value)">
-                  <option value="MinecraftTen" ${el.fontType === 'MinecraftTen' ? 'selected' : ''}>MinecraftTen</option>
-                  <option value="MinecraftRegular" ${el.fontType === 'MinecraftRegular' ? 'selected' : ''}>MinecraftRegular</option>
-                </select>
+                <label>Padding Width</label>
+                <input type="number" value="${el.paddingW || el.w + 5}" onchange="updateProp('paddingW', +this.value)">
               </div>
               <div class="prop-group">
-                <label>Font Scale</label>
-                <input type="number" step="0.1" value="${el.fontSize}" onchange="updateProp('fontSize', +this.value)">
+                <label>Padding Height</label>
+                <input type="number" value="${el.paddingH || el.h + 5}" onchange="updateProp('paddingH', +this.value)">
               </div>
             </div>
-            <div class="toggle-row" style="margin-top: 4px;">
-              <label>Text Shadow</label>
-              <input type="checkbox" ${el.shadow ? 'checked' : ''} onchange="updateProp('shadow', this.checked)">
+            <div class="prop-group">
+              <label>Icon Size</label>
+              <input type="number" value="${el.iconSize || 32}" onchange="updateProp('iconSize', +this.value)">
+            </div>
+            <div class="prop-group">
+              <label>Button Collection Index (Required for Script API)</label>
+              <input type="number" value="${el.collectionIndex}" onchange="updateProp('collectionIndex', +this.value)">
             </div>
           </div>
         `;
@@ -1067,7 +1053,7 @@
         </div>
 
         <div class="prop-card">
-          <div class="prop-card-title">Texture & 9-Slice</div>
+          <div class="prop-card-title">Texture</div>
           <div class="prop-group">
             <label>BakaUI Preset</label>
             <select onchange="updateTexturePreset(this.value)">
@@ -1079,31 +1065,6 @@
             <label>Custom Texture Path</label>
             <input type="text" value="${el.texture}" onchange="updateTexturePreset(this.value)">
           </div>
-
-          ${el.type === 'button' ? `
-            <div class="prop-group">
-              <label>Button Icon Path</label>
-              <input type="text" value="${el.iconTexture || 'textures/bakaui/trash'}" onchange="updateProp('iconTexture', this.value)">
-            </div>
-          ` : ''}
-          
-          <div class="toggle-row" style="margin-top: 4px;">
-            <label>Enable 9-Slice Border</label>
-            <input type="checkbox" ${el.useNineSlice ? 'checked' : ''} onchange="updateProp('useNineSlice', this.checked)">
-          </div>
-
-          ${el.useNineSlice ? `
-            <div class="prop-group">
-              <label>Slice Insets (Top / Right / Bottom / Left)</label>
-              <div class="prop-row-4">
-                <input type="number" title="Top" value="${el.sliceTop}" onchange="updateProp('sliceTop', +this.value)">
-                <input type="number" title="Right" value="${el.sliceRight}" onchange="updateProp('sliceRight', +this.value)">
-                <input type="number" title="Bottom" value="${el.sliceBottom}" onchange="updateProp('sliceBottom', +this.value)">
-                <input type="number" title="Left" value="${el.sliceLeft}" onchange="updateProp('sliceLeft', +this.value)">
-              </div>
-            </div>
-          ` : ''}
-
           <div class="prop-group">
             <label>Texture Opacity</label>
             <div class="slider-row">
@@ -1113,17 +1074,7 @@
           </div>
         </div>
 
-        ${textCardHtml}
-
-        ${el.collectionIndex !== null ? `
-          <div class="prop-card">
-            <div class="prop-card-title">ActionForm Binding</div>
-            <div class="prop-group">
-              <label>Button Collection Index</label>
-              <input type="number" value="${el.collectionIndex}" onchange="updateProp('collectionIndex', +this.value)">
-            </div>
-          </div>
-        ` : ''}
+        ${buttonSpecificHtml}
 
         <button class="btn btn-danger" style="margin-top: 6px;" onclick="deleteSelected()">🗑 Delete Element</button>
       `;
@@ -1133,10 +1084,7 @@
       if (selectedIds.length === 0) return;
       selectedIds.forEach(id => {
         const el = elements.find(e => e.id === id);
-        if (el) {
-          el.texture = path;
-          autoFetchNineSlice(el);
-        }
+        if (el) el.texture = path;
       });
       recordState();
       renderAll();
@@ -1175,180 +1123,44 @@
       updateInspector();
     }
 
-    // Fully Validated Bedrock JSON-UI Export Engine
-    function generateNamespaceJson() {
+    // Generates the inner button panel that has collection_name: "form_buttons"
+    function generateButtonPanelJson() {
+      const panelName = `my_custom_panel_${menuName}`;
       return {
-        "namespace": namespace,
-        "custom_button": {
+        [panelName]: {
           "type": "panel",
-          "$button_size|default": [64, 64],
-          "$icon_size|default": [32, 32],
-          "$icon_offset|default": [0, -6],
-          "$text_offset|default": [0, 20],
-          "$font_type|default": "MinecraftTen",
-          "$font_size|default": 1.0,
-          "$shadow|default": true,
-          "$default_button_texture|default": "textures/bakaui/button_light",
-          "$hover_button_texture|default": "textures/bakaui/button_lighthover",
-          "$pressed_button_texture|default": "textures/bakaui/button_lightpressed",
-          "size": "$button_size",
-          "bindings": [
-            {
-              "binding_name": "#form_button_text",
-              "binding_type": "collection",
-              "binding_collection_name": "form_buttons"
-            }
-          ],
-          "controls": [
-            {
-              "icon": {
-                "type": "image",
-                "layer": 3,
-                "size": "$icon_size",
-                "offset": "$icon_offset",
-                "anchor_from": "center",
-                "anchor_to": "center",
-                "bindings": [
-                  {
-                    "binding_name": "#form_button_texture",
-                    "binding_name_override": "#texture",
-                    "binding_type": "collection",
-                    "binding_collection_name": "form_buttons"
-                  },
-                  {
-                    "binding_name": "#form_button_texture_file_system",
-                    "binding_name_override": "#texture_file_system",
-                    "binding_type": "collection",
-                    "binding_collection_name": "form_buttons"
-                  },
-                  {
-                    "binding_type": "view",
-                    "source_property_name": "(not ((#texture = '') or (#texture = 'loading')))",
-                    "target_property_name": "#visible"
-                  }
-                ]
-              }
-            },
-            {
-              "label": {
-                "type": "label",
-                "layer": 4,
-                "text": "#form_button_text",
-                "font_type": "$font_type",
-                "font_scale_factor": "$font_size",
-                "shadow": "$shadow",
-                "offset": "$text_offset",
-                "anchor_from": "center",
-                "anchor_to": "center",
-                "bindings": [
-                  {
-                    "binding_name": "#form_button_text",
-                    "binding_type": "collection",
-                    "binding_collection_name": "form_buttons"
-                  }
-                ]
-              }
-            },
-            {
-              "button@common_buttons.light_content_button": {
-                "$pressed_button_name": "button.form_button_click",
-                "$default_button_texture": "$default_button_texture",
-                "$hover_button_texture": "$hover_button_texture",
-                "$pressed_button_texture": "$pressed_button_texture",
-                "size": "$button_size",
-                "anchor_from": "top_left",
-                "anchor_to": "top_left",
-                "$button_text": "#null",
-                "bindings": [
-                  {
-                    "binding_type": "collection_details",
-                    "binding_collection_name": "form_buttons"
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        [namespace]: {
-          "type": "panel",
-          "size": [canvas.clientWidth, canvas.clientHeight],
-          "anchor_from": "center",
-          "anchor_to": "center",
+          "size": ["100%", "100%"],
           "collection_name": "form_buttons",
           "controls": elements.map((el, i) => {
-            if (el.type === 'button') {
+            if (el.type.startsWith('custom_button')) {
+              const templateRef = el.type === 'custom_button_menu' 
+                ? 'server_form.custom_button_menu' 
+                : el.type === 'custom_button_shop' 
+                ? 'server_form.custom_button_shop' 
+                : 'server_form.custom_button';
+
               return {
-                [`btn_${el.collectionIndex}@${namespace}.custom_button`]: {
+                [`${el.name}@${templateRef}`]: {
                   "offset": [el.x, el.y],
                   "$button_size": [el.w, el.h],
-                  "$icon_offset": [el.iconOffsetX || 0, el.iconOffsetY || -6],
-                  "$text_offset": [el.textOffsetX || 0, el.textOffsetY || 20],
-                  "$font_type": el.fontType || "MinecraftTen",
-                  "$font_size": el.fontSize || 1.0,
-                  "$default_button_texture": el.texture || "textures/bakaui/button_light",
+                  "$padding_size": [el.paddingW || (el.w + 5), el.paddingH || (el.h + 5)],
+                  "$icon_size": [el.iconSize || 32, el.iconSize || 32],
+                  ...(el.texture ? { "$default_button_texture": el.texture } : {}),
                   "collection_index": el.collectionIndex,
-                  "layer": el.layer,
                   "anchor_from": "top_left",
                   "anchor_to": "top_left"
                 }
               };
             }
-            if (el.type === 'title') {
-              return {
-                [`title_bar_${i}`]: {
-                  "type": "label",
-                  "offset": [el.x, el.y],
-                  "size": [el.w, el.h],
-                  "layer": el.layer,
-                  "text": "#title_text",
-                  "font_type": el.fontType,
-                  "font_scale_factor": el.fontSize,
-                  "text_alignment": el.textAlignment,
-                  "shadow": el.shadow,
-                  "anchor_from": "top_left",
-                  "anchor_to": "top_left",
-                  "bindings": [{ "binding_name": "#title_text" }]
-                }
-              };
-            }
-            if (el.type === 'body') {
-              return {
-                [`body_text_${i}`]: {
-                  "type": "label",
-                  "offset": [el.x, el.y],
-                  "size": [el.w, el.h],
-                  "layer": el.layer,
-                  "text": "#form_text",
-                  "font_type": el.fontType,
-                  "font_scale_factor": el.fontSize,
-                  "text_alignment": el.textAlignment,
-                  "shadow": el.shadow,
-                  "anchor_from": "top_left",
-                  "anchor_to": "top_left",
-                  "bindings": [{ "binding_name": "#form_text" }]
-                }
-              };
-            }
-            if (el.type === 'close') {
-              return {
-                [`close_${i}@server_form.my_close_button`]: {
-                  "offset": [el.x, el.y],
-                  "size": [el.w, el.h],
-                  "layer": el.layer,
-                  "anchor_from": "top_left",
-                  "anchor_to": "top_left"
-                }
-              };
-            }
-            // For panel, image, divider: Output strictly valid 'image' control type
+            // Images / Dividers
             return {
-              [`${el.type}_${i}`]: {
-                "type": el.texture ? "image" : "panel",
+              [`${el.name}`]: {
+                "type": "image",
                 "size": [el.w, el.h],
                 "offset": [el.x, el.y],
                 "layer": el.layer,
                 ...(el.alpha !== 1.0 ? { "alpha": el.alpha } : {}),
-                ...(el.texture ? { "texture": el.texture } : {}),
+                "texture": el.texture || "textures/bakaui/custom_bg_dark",
                 "anchor_from": "top_left",
                 "anchor_to": "top_left"
               }
@@ -1358,24 +1170,74 @@
       };
     }
 
-    function openPreviewModal() {
-      const json = generateNamespaceJson();
-      document.getElementById('code-preview').value = JSON.stringify(json, null, 2);
-      document.getElementById('preview-modal').style.display = 'flex';
-    }
+    // Generates the dialog entry for long_form.controls
+    function generateDialogEntryJson() {
+      const dialogId = `bakaui_${menuName}`;
+      const btnPanelRef = `server_form.my_custom_panel_${menuName}`;
+      const cw = parseFloat(canvas.style.width) || 322.5;
+      const ch = parseFloat(canvas.style.height) || 200;
 
-    function closePreviewModal() {
-      document.getElementById('preview-modal').style.display = 'none';
-    }
-
-    function openExportModal() {
-      const namespaceJson = generateNamespaceJson();
-
-      const serverFormSnippet = {
-        [`${namespace}_panel@${namespace}.${namespace}`]: {
+      return {
+        [dialogId]: {
+          "type": "panel",
+          "size": [cw, ch],
           "layer": 2,
+          "controls": [
+            {
+              "indent_panel": {
+                "type": "panel",
+                "size": ["100% - 16px", "100%"],
+                "controls": [
+                  {
+                    "my_form_label@server_form.my_form_label": {}
+                  },
+                  {
+                    "my_form_background@server_form.my_form_background": {
+                      "size": [cw, 5],
+                      "anchor_from": "top_middle",
+                      "anchor_to": "top_middle"
+                    }
+                  },
+                  {
+                    "darkfade@server_form.my_form_background_black": {
+                      "size": [10000, 5000]
+                    }
+                  },
+                  {
+                    "my_close_button@server_form.my_close_button": {
+                      "offset": [-5, -20],
+                      "layer": 64
+                    }
+                  },
+                  {
+                    "content_stack": {
+                      "type": "stack_panel",
+                      "size": ["100%", "100%"],
+                      "orientation": "vertical",
+                      "controls": [
+                        {
+                          "padding": {
+                            "type": "panel",
+                            "size": ["100%", 8]
+                          }
+                        },
+                        {
+                          "my_form_body@server_form.my_form_body": {}
+                        },
+                        {
+                          [`button_panel@${btnPanelRef}`]: {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ],
           "bindings": [
-            { "binding_name": "#title_text" },
+            {
+              "binding_name": "#title_text"
+            },
             {
               "binding_type": "view",
               "source_property_name": `(not((#title_text - '${titleFilter}') = #title_text))`,
@@ -1384,10 +1246,27 @@
           ]
         }
       };
+    }
 
-      document.getElementById('out-ns-name').innerText = namespace;
-      document.getElementById('code-namespace').value = JSON.stringify(namespaceJson, null, 2);
-      document.getElementById('code-server-form').value = JSON.stringify(serverFormSnippet, null, 2);
+    function openPreviewModal() {
+      const fullPreview = {
+        ...generateDialogEntryJson(),
+        ...generateButtonPanelJson()
+      };
+      document.getElementById('code-preview').value = JSON.stringify(fullPreview, null, 2);
+      document.getElementById('preview-modal').style.display = 'flex';
+    }
+
+    function closePreviewModal() {
+      document.getElementById('preview-modal').style.display = 'none';
+    }
+
+    function openExportModal() {
+      const btnPanel = generateButtonPanelJson();
+      const dialogEntry = generateDialogEntryJson();
+
+      document.getElementById('code-btn-panel').value = JSON.stringify(btnPanel, null, 2);
+      document.getElementById('code-dialog-panel').value = JSON.stringify(dialogEntry, null, 2);
       document.getElementById('export-modal').style.display = 'flex';
     }
 
@@ -1395,7 +1274,6 @@
       document.getElementById('export-modal').style.display = 'none';
     }
 
-    // Initialize State
     recordState();
   </script>
 </body>
