@@ -235,7 +235,7 @@
       image-rendering: pixelated;
     }
     
-    /* Centered Body with Normal Font */
+    /* Centered Body with Normal Font (100% - 22px bounds) */
     .chrome-body-container {
       position: absolute;
       top: 8px;
@@ -276,12 +276,17 @@
       width: 100%;
     }
 
-    /* Interactive Drag & Resize Workspace Canvas */
+    /* Workspace Canvas bounded strictly within form_body width (inset by 11px) */
     #button-workspace {
       position: absolute;
-      inset: 0;
+      left: 11px;
+      right: 11px;
+      top: 40px;
+      bottom: 8px;
       pointer-events: auto;
       z-index: 10;
+      border: 1px dashed rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
     }
 
     /* UI Elements */
@@ -496,9 +501,9 @@
         </div>
       </div>
 
-      <!-- Form Body Configuration -->
+      <!-- Form Body & Stacking Settings -->
       <div class="sidebar-section">
-        <div class="section-title">Form Body & Title Settings</div>
+        <div class="section-title">Form Body & Stack Settings</div>
         <div class="prop-group">
           <label>ActionFormData Title (§)</label>
           <input type="text" id="inp-form-binding" value="§fCustom Shop§r" oninput="updateTitleFilter(this.value)">
@@ -538,7 +543,7 @@
       <div class="tree-view" id="element-tree"></div>
     </div>
 
-    <!-- Center Viewport -->
+    <!-- Center Viewport (Interactive Drag & Resize Canvas) -->
     <div class="viewport" id="viewport">
       <div id="canvas-wrapper" class="grid-on" style="width: 322.5px; height: 200px;">
         <!-- Template Chrome -->
@@ -559,7 +564,7 @@
           </div>
         </div>
 
-        <!-- Interactive Drag & Resize Workspace -->
+        <!-- Interactive Drag & Resize Workspace (Restricted to Body Width Bounds) -->
         <div id="button-workspace"></div>
       </div>
     </div>
@@ -586,7 +591,7 @@
       </div>
       <div class="modal-body">
         <div class="prop-group">
-          <label class="section-title">1. Calibrated Button Panel Definition (Place at bottom of server_form.json)</label>
+          <label class="section-title">1. Button Panel Definition (Place at bottom of server_form.json)</label>
           <textarea class="code-box" id="code-btn-preview" readonly></textarea>
         </div>
         <div class="prop-group">
@@ -634,7 +639,7 @@
 
     let zoomScale = 1.5;
     let gridSnap = true;
-    let gridSize = 10; // Default calibrated to 10px grid
+    let gridSize = 10;
 
     let historyStack = [];
     let historyIndex = -1;
@@ -669,6 +674,15 @@
       { name: "Custom BG Black", path: "textures/bakaui/custom_bg", slice: [3, 3, 3, 3] },
       { name: "Close Button", path: "textures/bakaui/close_button", slice: [0, 0, 0, 0] }
     ];
+
+    function formatWithoutOuterBraces(obj) {
+      const str = JSON.stringify(obj, null, 2).trim();
+      if (str.startsWith('{') && str.endsWith('}')) {
+        const lines = str.split('\n').slice(1, -1);
+        return lines.map(line => line.startsWith('  ') ? line.substring(2) : line).join('\n');
+      }
+      return str;
+    }
 
     function recordState() {
       const state = JSON.stringify({ elements, enableBody, bodyHeight, bodyText, titleFilter, menuName });
@@ -750,8 +764,11 @@
 
         const clone = JSON.parse(JSON.stringify(target));
         clone.id = 'el_' + Date.now() + Math.random().toString(36).substr(2, 4);
-        clone.x = snap(clone.x + gridSize);
-        clone.y = snap(clone.y + gridSize);
+        
+        const maxX = Math.max(0, workspace.clientWidth - clone.w);
+        const maxY = Math.max(0, workspace.clientHeight - clone.h);
+        clone.x = Math.max(0, Math.min(maxX, snap(clone.x + gridSize)));
+        clone.y = Math.max(0, Math.min(maxY, snap(clone.y + gridSize)));
 
         if (clone.type === 'custom_button') {
           clone.name = `button_${buttonCount}`;
@@ -841,6 +858,10 @@
       document.getElementById('body-settings-wrapper').style.display = enableBody ? 'flex' : 'none';
       document.getElementById('chk-enable-body').checked = enableBody;
 
+      // Workspace strictly aligns below body within the 100% - 22px body width boundary
+      const wsTop = enableBody ? (8 + bodyHeight + 4) : 8;
+      workspace.style.top = wsTop + 'px';
+
       document.getElementById('inp-form-binding').value = titleFilter;
       document.getElementById('inp-menu-name').value = menuName;
       document.getElementById('inp-body-text').value = bodyText;
@@ -855,8 +876,8 @@
         id,
         name: isButton ? `button_${buttonCount}` : `${type}_${elements.length + 1}`,
         type,
-        x: 16,
-        y: enableBody ? (bodyHeight + 16) : 20,
+        x: 0,
+        y: 0,
         w: 64,
         h: 64,
         iconSize: 32,
@@ -882,10 +903,8 @@
       };
 
       if (type === 'divider') {
-        newEl.w = 280;
+        newEl.w = Math.min(280, workspace.clientWidth || 280);
         newEl.h = 5;
-        newEl.x = 16;
-        newEl.y = enableBody ? (bodyHeight + 10) : 10;
       }
 
       newEl.x = snap(newEl.x);
@@ -953,7 +972,7 @@
         }
         div.appendChild(contentLayer);
 
-        // 3. 8-Directional Precision Resize Handles
+        // 3. 8-Directional Precision Resize Handles (Clamped strictly within form_body width)
         if (isSelected && selectedIds.length === 1) {
           ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].forEach(dir => {
             const handle = document.createElement('div');
@@ -968,6 +987,8 @@
               const origY = el.y;
               const origW = el.w;
               const origH = el.h;
+              const maxWBound = workspace.clientWidth;
+              const maxHBound = workspace.clientHeight;
 
               function onResizeMove(moveEv) {
                 const deltaX = (moveEv.clientX - startMouseX) / zoomScale;
@@ -978,17 +999,33 @@
                 let nextW = origW;
                 let nextH = origH;
 
-                if (dir.includes('e')) nextW = Math.max(gridSize, snap(origW + deltaX));
-                if (dir.includes('s')) nextH = Math.max(gridSize, snap(origH + deltaY));
+                if (dir.includes('e')) {
+                  nextW = Math.max(gridSize, snap(origW + deltaX));
+                  if (origX + nextW > maxWBound) nextW = maxWBound - origX;
+                }
+                if (dir.includes('s')) {
+                  nextH = Math.max(gridSize, snap(origH + deltaY));
+                  if (origY + nextH > maxHBound) nextH = maxHBound - origY;
+                }
                 if (dir.includes('w')) {
                   const snappedW = Math.max(gridSize, snap(origW - deltaX));
                   nextX = origX + (origW - snappedW);
-                  nextW = snappedW;
+                  if (nextX < 0) {
+                    nextX = 0;
+                    nextW = origX + origW;
+                  } else {
+                    nextW = snappedW;
+                  }
                 }
                 if (dir.includes('n')) {
                   const snappedH = Math.max(gridSize, snap(origH - deltaY));
                   nextY = origY + (origH - snappedH);
-                  nextH = snappedH;
+                  if (nextY < 0) {
+                    nextY = 0;
+                    nextH = origY + origH;
+                  } else {
+                    nextH = snappedH;
+                  }
                 }
 
                 el.x = nextX;
@@ -1019,7 +1056,7 @@
           });
         }
 
-        // 4. Drag Movement
+        // 4. Drag Movement (Clamped strictly within the form_body range)
         div.onpointerdown = (e) => {
           if (e.target.classList.contains('resize-handle')) return;
           e.stopPropagation();
@@ -1053,8 +1090,12 @@
                 let nextX = snap(init.x + deltaX);
                 let nextY = snap(init.y + deltaY);
 
-                nextX = Math.max(0, Math.min(canvas.clientWidth - targetEl.w, nextX));
-                nextY = Math.max(0, Math.min(canvas.clientHeight - targetEl.h, nextY));
+                // Range restriction: [0, workspace.clientWidth - targetEl.w]
+                const maxX = Math.max(0, workspace.clientWidth - targetEl.w);
+                const maxY = Math.max(0, workspace.clientHeight - targetEl.h);
+
+                nextX = Math.max(0, Math.min(maxX, nextX));
+                nextY = Math.max(0, Math.min(maxY, nextY));
 
                 targetEl.x = nextX;
                 targetEl.y = nextY;
@@ -1351,14 +1392,14 @@
       updateInspector();
     }
 
-    // Precise Calibrated Stack Panel Generator
+    // Calibrated Stack Panel Generator (Without outer braces)
     function generateButtonPanelJson() {
       const panelName = `my_custom_panel_${menuName}`;
 
       // 1. Sort elements top-to-bottom, left-to-right
       const sorted = [...elements].sort((a, b) => a.y - b.y || a.x - b.x);
 
-      // 2. Cluster into rows
+      // 2. Cluster into distinct rows
       const rows = [];
       sorted.forEach(el => {
         let placed = false;
@@ -1398,11 +1439,9 @@
               if (count === 1) {
                 padW = 312;
               } else if (count === 3 && (i === 0 || i === count - 1)) {
-                // Outer buttons on a 3-button row
-                padW = el.w + 30; // e.g. 64 + 30 = 94
+                padW = el.w + 30; // Outer buttons: 64 + 30 = 94
               } else if (count === 3 && i === 1) {
-                // Middle button on a 3-button row
-                padW = el.w - 20; // e.g. 144 - 20 = 124
+                padW = el.w - 20; // Middle button: 144 - 20 = 124
               } else if (count === 2) {
                 padW = Math.round(el.w + (totalExtra / 2));
               } else {
@@ -1417,7 +1456,6 @@
               if (rowIndex === 0) {
                 padH = el.h + 5; // e.g. 64 + 5 = 69
               } else {
-                // Row 1+ vertical stacking compensation
                 const prevRowSumH = prevRowHeightPads.reduce((s, p) => s + p, 0);
                 padH = -(prevRowSumH - 17); // e.g. -(207 - 17) = -190
               }
@@ -1567,11 +1605,11 @@
     }
 
     function openPreviewModal() {
-      const btnPanel = generateButtonPanelJson();
-      const dialogEntry = generateDialogEntryJson();
+      const btnPanelObj = generateButtonPanelJson();
+      const dialogEntryObj = generateDialogEntryJson();
 
-      document.getElementById('code-btn-preview').value = JSON.stringify(btnPanel, null, 2);
-      document.getElementById('code-dialog-preview').value = JSON.stringify(dialogEntry, null, 2);
+      document.getElementById('code-btn-preview').value = formatWithoutOuterBraces(btnPanelObj);
+      document.getElementById('code-dialog-preview').value = formatWithoutOuterBraces(dialogEntryObj);
       document.getElementById('preview-modal').style.display = 'flex';
     }
 
@@ -1580,11 +1618,11 @@
     }
 
     function openExportModal() {
-      const btnPanel = generateButtonPanelJson();
-      const dialogEntry = generateDialogEntryJson();
+      const btnPanelObj = generateButtonPanelJson();
+      const dialogEntryObj = generateDialogEntryJson();
 
-      document.getElementById('code-btn-panel').value = JSON.stringify(btnPanel, null, 2);
-      document.getElementById('code-dialog-panel').value = JSON.stringify(dialogEntry, null, 2);
+      document.getElementById('code-btn-panel').value = formatWithoutOuterBraces(btnPanelObj);
+      document.getElementById('code-dialog-panel').value = formatWithoutOuterBraces(dialogEntryObj);
       document.getElementById('export-modal').style.display = 'flex';
     }
 
