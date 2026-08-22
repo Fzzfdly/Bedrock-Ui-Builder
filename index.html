@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft Bedrock JSON-UI Studio (Stack Panel Engine)</title>
+  <title>Minecraft Bedrock JSON-UI Studio (Centered Stack Panel Engine)</title>
   <link href="https://fonts.cdnfonts.com/css/minecraft-4" rel="stylesheet">
   <style>
     :root {
@@ -26,7 +26,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; user-select: none; }
     body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-    /* Header */
+    /* Top Toolbar */
     header {
       background-color: var(--bg-panel);
       border-bottom: 1px solid var(--border-color);
@@ -81,7 +81,7 @@
       font-size: 11px;
     }
 
-    /* Workspace Layout */
+    /* Workspace */
     .app-container { display: flex; flex: 1; height: calc(100vh - 52px); overflow: hidden; }
 
     /* Left Sidebar */
@@ -164,7 +164,7 @@
       image-rendering: pixelated;
     }
 
-    /* Subtle Grid */
+    /* Subtle Grid Overlay */
     #canvas-wrapper.grid-on {
       background-image: 
         linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
@@ -235,7 +235,7 @@
       image-rendering: pixelated;
     }
     
-    /* Adaptive Form Body Container (Centered & Normal Font) */
+    /* Centered Body with Normal Font */
     .chrome-body-container {
       position: absolute;
       top: 8px;
@@ -265,7 +265,7 @@
       position: relative;
       z-index: 2;
       font-family: 'Minecraft', monospace;
-      font-weight: 400;
+      font-weight: 400; /* Regular normal font */
       font-size: 11px;
       color: #ffffff;
       text-align: center;
@@ -276,13 +276,13 @@
       width: 100%;
     }
 
-    /* Stack Container Workspace */
+    /* Button Workspace */
     #button-workspace {
       position: absolute;
       left: 0;
       right: 0;
       bottom: 0;
-      top: 36px;
+      top: 40px;
       pointer-events: auto;
       z-index: 10;
     }
@@ -368,7 +368,7 @@
     .handle-w  { top: calc(50% - 4px); left: -4px; cursor: ew-resize; }
     .handle-e  { top: calc(50% - 4px); right: -4px; cursor: ew-resize; }
 
-    /* Right Sidebar: Inspector */
+    /* Right Sidebar */
     .sidebar-right {
       width: 320px;
       background-color: var(--bg-panel);
@@ -436,7 +436,7 @@
       border: 1px solid var(--border-color);
       border-radius: 4px;
       resize: vertical;
-      height: 380px;
+      height: 200px;
       user-select: text;
     }
   </style>
@@ -445,7 +445,7 @@
 
   <!-- Header -->
   <header>
-    <div class="brand">⛏ Bedrock JSON-UI Studio (Stack Panel Engine)</div>
+    <div class="brand">⛏ Bedrock JSON-UI Studio (Centered Stacks)</div>
     <div class="toolbar-actions">
       <!-- Undo / Redo -->
       <button class="btn" id="btn-undo" onclick="undo()" title="Undo (Ctrl+Z)">↩ Undo</button>
@@ -498,7 +498,7 @@
         </div>
       </div>
 
-      <!-- Adaptive Body & Title Configuration -->
+      <!-- Adaptive Body & Title Settings -->
       <div class="sidebar-section">
         <div class="section-title">Form Body & Title Settings</div>
         <div class="prop-group">
@@ -540,33 +540,33 @@
       <div class="tree-view" id="element-tree"></div>
     </div>
 
-    <!-- Center Viewport with Background -->
+    <!-- Center Viewport -->
     <div class="viewport" id="viewport">
       <div id="canvas-wrapper" class="grid-on" style="width: 322.5px; height: 200px;">
-        <!-- Fixed BakaUI Chrome Template overlay -->
+        <!-- Template Chrome -->
         <div class="template-chrome">
           <div class="chrome-label" id="disp-chrome-label">§fCustom Shop§r</div>
           <div class="chrome-divider"></div>
           
-          <!-- Stacked Close Button Visualizer -->
+          <!-- Stacked Close Button -->
           <div class="chrome-close">
             <div class="chrome-close-bg"></div>
             <div class="chrome-close-icon"></div>
           </div>
           
-          <!-- Centered Body with Normal Font -->
+          <!-- Form Body Container -->
           <div class="chrome-body-container" id="disp-body-container">
             <div class="chrome-body-bg"></div>
             <div class="chrome-body-text" id="disp-body-text">Choose an item from the list below:</div>
           </div>
         </div>
 
-        <!-- Button Workspace container -->
+        <!-- Button Workspace -->
         <div id="button-workspace"></div>
       </div>
     </div>
 
-    <!-- Right Sidebar: Properties & Texture Selector -->
+    <!-- Right Sidebar -->
     <div class="sidebar-right">
       <div class="inspector-header">
         <span>Property Inspector</span>
@@ -588,8 +588,12 @@
       </div>
       <div class="modal-body">
         <div class="prop-group">
-          <label class="section-title">Complete Stack Panel JSON Output</label>
-          <textarea class="code-box" id="code-preview" readonly></textarea>
+          <label class="section-title">1. Centered Button Panel Definition (Place at bottom of server_form.json)</label>
+          <textarea class="code-box" id="code-btn-preview" readonly></textarea>
+        </div>
+        <div class="prop-group">
+          <label class="section-title">2. Dialog Panel Entry (Place inside long_form.controls array)</label>
+          <textarea class="code-box" id="code-dialog-preview" readonly></textarea>
         </div>
       </div>
     </div>
@@ -658,7 +662,6 @@
       { code: "§g", name: "§g Minecoin Gold", hex: "#ddd605" }
     ];
 
-    // Standard 3:3 default nine-slice
     const TEXTURE_PRESETS = [
       { name: "Button Light", path: "textures/bakaui/button_light", slice: [3, 3, 3, 3] },
       { name: "Button Light Hover", path: "textures/bakaui/button_lighthover", slice: [3, 3, 3, 3] },
@@ -718,7 +721,6 @@
       document.getElementById('btn-redo').disabled = (historyIndex >= historyStack.length - 1);
     }
 
-    // Keyboard Shortcuts (Ctrl+Z, Ctrl+Y, Ctrl+D Duplicate)
     window.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
@@ -840,7 +842,6 @@
       document.getElementById('body-settings-wrapper').style.display = enableBody ? 'flex' : 'none';
       document.getElementById('chk-enable-body').checked = enableBody;
 
-      // Align button workspace directly below body container
       const wsTop = enableBody ? (8 + bodyHeight + 4) : 8;
       workspace.style.top = wsTop + 'px';
 
@@ -870,7 +871,7 @@
         text: isButton ? `Option ${buttonCount}` : '',
         fontType: 'MinecraftTen',
         fontSize: 1.0,
-        textColor: '#ffffff', // Default White
+        textColor: '#ffffff',
         mcColorCode: '§f',
         shadow: true,
         texture: isButton ? 'textures/bakaui/button_light' : type === 'divider' ? 'textures/bakaui/custom_bg_divider' : 'textures/bakaui/custom_bg_dark',
@@ -920,7 +921,6 @@
         div.style.zIndex = el.layer;
         div.style.color = el.textColor || '#ffffff';
 
-        // 1. Background Layer (3:3 default 9-slice)
         const bgLayer = document.createElement('div');
         bgLayer.className = 'ui-bg-layer';
         bgLayer.style.opacity = el.alpha;
@@ -939,7 +939,6 @@
         }
         div.appendChild(bgLayer);
 
-        // 2. Content Layer
         const contentLayer = document.createElement('div');
         contentLayer.className = 'ui-content-layer';
 
@@ -956,7 +955,6 @@
         }
         div.appendChild(contentLayer);
 
-        // 3. Resize Handles
         if (isSelected && selectedIds.length === 1) {
           ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].forEach(dir => {
             const handle = document.createElement('div');
@@ -1026,7 +1024,6 @@
           });
         }
 
-        // 4. Drag Movement
         div.onpointerdown = (e) => {
           if (e.target.classList.contains('resize-handle')) return;
           e.stopPropagation();
@@ -1361,11 +1358,11 @@
       updateInspector();
     }
 
-    // Stack Panel Exporter: Groups elements into horizontal row stack_panels automatically
+    // Centered Stack Panel Exporter: Uses 100%c sizes and precise button/padding mappings
     function generateButtonPanelJson() {
       const panelName = `my_custom_panel_${menuName}`;
 
-      // 1. Sort elements by Y coordinate first, then X
+      // 1. Sort elements by Y coordinate, then X
       const sorted = [...elements].sort((a, b) => a.y - b.y || a.x - b.x);
 
       // 2. Cluster into distinct horizontal row tiers
@@ -1374,7 +1371,7 @@
         let placed = false;
         for (const row of rows) {
           const avgY = row.reduce((sum, item) => sum + item.y, 0) / row.length;
-          if (Math.abs(el.y - avgY) <= 18) { // Elements within 18px belong to same row
+          if (Math.abs(el.y - avgY) <= 24) {
             row.push(el);
             placed = true;
             break;
@@ -1383,17 +1380,18 @@
         if (!placed) rows.push([el]);
       });
 
-      // 3. Construct nested stack_panels matching BakaUI engine architecture
+      // 3. Construct centered rows
       const rowControls = rows.map((rowItems, rowIndex) => {
-        // Sort items left-to-right inside the row
         rowItems.sort((a, b) => a.x - b.x);
 
         const itemsControls = rowItems.map(el => {
           if (el.type === 'custom_button') {
+            const padW = el.paddingW !== undefined ? el.paddingW : (el.w + 5);
+            const padH = el.paddingH !== undefined ? el.paddingH : (el.h + 5);
             return {
               [`${el.name}@server_form.custom_button`]: {
                 "$button_size": [el.w, el.h],
-                "$padding_size": [el.paddingW || (el.w + 5), el.paddingH || (el.h + 5)],
+                "$padding_size": [padW, padH],
                 "$icon_size": [el.iconSize || 32, el.iconSize || 32],
                 ...(el.texture ? { "$default_button_texture": el.texture } : {}),
                 "collection_index": el.collectionIndex
@@ -1411,7 +1409,6 @@
           };
         });
 
-        // Single item in row vs multiple items in row
         if (rows.length === 1) {
           return itemsControls;
         }
@@ -1419,7 +1416,7 @@
         return {
           [`row_stack_${rowIndex}`]: {
             "type": "stack_panel",
-            "size": ["100%", "100%c"],
+            "size": ["100%c", "100%c"],
             "orientation": "horizontal",
             "anchor_from": "center",
             "anchor_to": "center",
@@ -1434,7 +1431,7 @@
       return {
         [panelName]: {
           "type": "stack_panel",
-          "size": ["100%", "100%"],
+          "size": ["100%c", "100%c"],
           "orientation": rows.length === 1 ? "horizontal" : "vertical",
           "anchor_from": "center",
           "anchor_to": "center",
@@ -1532,7 +1529,8 @@
       const btnPanel = generateButtonPanelJson();
       const dialogEntry = generateDialogEntryJson();
 
-      document.getElementById('code-preview').value = JSON.stringify({ ...dialogEntry, ...btnPanel }, null, 2);
+      document.getElementById('code-btn-preview').value = JSON.stringify(btnPanel, null, 2);
+      document.getElementById('code-dialog-preview').value = JSON.stringify(dialogEntry, null, 2);
       document.getElementById('preview-modal').style.display = 'flex';
     }
 
