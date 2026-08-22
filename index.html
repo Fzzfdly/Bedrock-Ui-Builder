@@ -60,7 +60,7 @@
     /* Main Workspace Layout */
     .app-container { display: flex; flex: 1; height: calc(100vh - 50px); overflow: hidden; }
 
-    /* Left Sidebar: Components & File Explorer */
+    /* Left Sidebar: Components & Hierarchy */
     .sidebar-left {
       width: 260px;
       background-color: var(--bg-panel);
@@ -133,7 +133,7 @@
       background-color: rgba(0, 0, 0, 0.7);
       border: 2px dashed #444f5c;
       box-shadow: 0 12px 36px rgba(0,0,0,0.85);
-      transform-origin: center center;
+      touch-action: none;
     }
 
     /* Canvas UI Elements */
@@ -145,6 +145,7 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
+      touch-action: none;
     }
     .ui-element.selected {
       outline: 2px solid var(--mc-aqua) !important;
@@ -171,7 +172,7 @@
     .ui-type-button .btn-icon { width: 32px; height: 32px; background: #1e293b; border: 1px dashed #64748b; border-radius: 2px; }
     .ui-type-button .btn-label { font-size: 11px; text-align: center; }
 
-    /* Right Sidebar: Property Inspector */
+    /* Right Sidebar: Properties & Texture Selector */
     .sidebar-right {
       width: 320px;
       background-color: var(--bg-panel);
@@ -278,16 +279,12 @@
       </div>
 
       <!-- Live Tree Manager -->
-      <div class="tree-view" id="element-tree">
-        <!-- Injected via renderTree() -->
-      </div>
+      <div class="tree-view" id="element-tree"></div>
     </div>
 
     <!-- Center Canvas Viewport -->
     <div class="viewport" id="viewport">
-      <div id="canvas-wrapper" style="width: 432px; height: 243px;">
-        <!-- Injected via renderCanvas() -->
-      </div>
+      <div id="canvas-wrapper" style="width: 432px; height: 243px;"></div>
     </div>
 
     <!-- Right Sidebar: Properties & Texture Selector -->
@@ -335,7 +332,6 @@
     let namespace = "custom_shop";
     let buttonCount = 0;
 
-    // Presets for Built-in Textures
     const TEXTURE_PRESETS = [
       { name: "Default Turquoise BG", path: "textures/assets/turquoise_default_background" },
       { name: "Default Turquoise Button", path: "textures/assets/turquoise_default_button" },
@@ -354,7 +350,6 @@
       renderCanvas();
     }
 
-    // Add New Element
     function addElement(type) {
       const id = 'el_' + Date.now();
       let newEl = {
@@ -388,13 +383,14 @@
       selectElement(id);
     }
 
-    // Render Canvas
+    // Canvas Renderer with Native Pointer Lock Tracking
     function renderCanvas() {
       canvas.innerHTML = '';
       elements.forEach(el => {
         if (!el.visible) return;
 
         const div = document.createElement('div');
+        div.id = el.id;
         div.className = `ui-element ui-type-${el.type} ${el.id === selectedId ? 'selected' : ''}`;
         div.style.left = el.x + 'px';
         div.style.top = el.y + 'px';
@@ -410,46 +406,51 @@
           div.style.textAlign = el.textAlignment;
         }
 
-        // Mouse Drag Tracking
-        div.onmousedown = (e) => {
+        // Pointer-Based Instant-Follow Dragging
+        div.onpointerdown = (e) => {
           e.stopPropagation();
-          selectElement(el.id);
+          div.setPointerCapture(e.pointerId);
+
+          // Update active selection without rebuilding canvas DOM
+          setActiveSelection(el.id);
 
           const canvasRect = canvas.getBoundingClientRect();
-          const clickOffsetX = e.clientX - (canvasRect.left + el.x);
-          const clickOffsetY = e.clientY - (canvasRect.top + el.y);
+          const startMouseX = e.clientX;
+          const startMouseY = e.clientY;
+          const startElemX = el.x;
+          const startElemY = el.y;
 
-          function onMouseMove(moveEvent) {
-            const curRect = canvas.getBoundingClientRect();
-            let newX = moveEvent.clientX - curRect.left - clickOffsetX;
-            let newY = moveEvent.clientY - curRect.top - clickOffsetY;
+          div.onpointermove = (moveEvent) => {
+            const deltaX = moveEvent.clientX - startMouseX;
+            const deltaY = moveEvent.clientY - startMouseY;
 
-            // Clamping inside the canvas
-            newX = Math.max(0, Math.min(canvas.clientWidth - el.w, newX));
-            newY = Math.max(0, Math.min(canvas.clientHeight - el.h, newY));
+            let nextX = startElemX + deltaX;
+            let nextY = startElemY + deltaY;
 
-            el.x = Math.round(newX);
-            el.y = Math.round(newY);
+            // Constrain within canvas boundaries
+            nextX = Math.max(0, Math.min(canvas.clientWidth - el.w, nextX));
+            nextY = Math.max(0, Math.min(canvas.clientHeight - el.h, nextY));
+
+            el.x = Math.round(nextX);
+            el.y = Math.round(nextY);
 
             div.style.left = el.x + 'px';
             div.style.top = el.y + 'px';
-            updateInspectorInputs();
-          }
 
-          function onMouseUp() {
-            window.removeEventListener('mousemove', onMouseMove);
-            window.removeEventListener('mouseup', onMouseUp);
-          }
+            updateInspectorCoordinates();
+          };
 
-          window.addEventListener('mousemove', onMouseMove);
-          window.addEventListener('mouseup', onMouseUp);
+          div.onpointerup = (upEvent) => {
+            div.releasePointerCapture(upEvent.pointerId);
+            div.onpointermove = null;
+            div.onpointerup = null;
+          };
         };
 
         canvas.appendChild(div);
       });
     }
 
-    // Render Hierarchy Tree
     function renderTree() {
       treeView.innerHTML = '';
       elements.slice().reverse().forEach(el => {
@@ -491,11 +492,24 @@
       renderTree();
     }
 
-    // Selection & Inspector
+    // Set selection without wiping canvas DOM during active drag
+    function setActiveSelection(id) {
+      selectedId = id;
+      document.querySelectorAll('.ui-element').forEach(node => {
+        node.classList.toggle('selected', node.id === id);
+      });
+      renderTree();
+      updateInspector();
+    }
+
     function selectElement(id) {
       selectedId = id;
       renderAll();
-      const el = elements.find(e => e.id === id);
+      updateInspector();
+    }
+
+    function updateInspector() {
+      const el = elements.find(e => e.id === selectedId);
       const badge = document.getElementById('inspect-id-badge');
 
       if (!el) {
@@ -507,7 +521,6 @@
       badge.innerText = `${el.type.toUpperCase()}`;
 
       inspectorContent.innerHTML = `
-        <!-- Identification -->
         <div class="prop-card">
           <div class="prop-card-title">Element Info</div>
           <div class="prop-group">
@@ -516,7 +529,6 @@
           </div>
         </div>
 
-        <!-- Transform -->
         <div class="prop-card">
           <div class="prop-card-title">Transform & Position</div>
           <div class="prop-row">
@@ -545,7 +557,6 @@
           </div>
         </div>
 
-        <!-- Texture Selector -->
         <div class="prop-card">
           <div class="prop-card-title">Texture</div>
           <div class="prop-group">
@@ -568,7 +579,6 @@
           </div>
         </div>
 
-        <!-- Typography & Text -->
         <div class="prop-card">
           <div class="prop-card-title">Text & Font</div>
           <div class="prop-group">
@@ -606,7 +616,6 @@
         </div>
 
         ${el.collectionIndex !== null ? `
-          <!-- Collection Details -->
           <div class="prop-card">
             <div class="prop-card-title">ActionForm Binding</div>
             <div class="prop-group">
@@ -627,7 +636,7 @@
       renderAll();
     }
 
-    function updateInspectorInputs() {
+    function updateInspectorCoordinates() {
       const el = elements.find(e => e.id === selectedId);
       if (!el) return;
       const ix = document.getElementById('inp-x');
@@ -639,10 +648,9 @@
       elements = elements.filter(e => e.id !== selectedId);
       selectedId = null;
       renderAll();
-      selectElement(null);
+      updateInspector();
     }
 
-    // Export Generation Logic
     function openExportModal() {
       const namespaceJson = {
         "namespace": namespace,
