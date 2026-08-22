@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Minecraft Bedrock JSON-UI Studio</title>
-  <!-- Minecraft Font CDN -->
   <link href="https://fonts.cdnfonts.com/css/minecraft-4" rel="stylesheet">
   <style>
     :root {
@@ -26,7 +25,6 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; user-select: none; }
     body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-    /* Top Toolbar */
     header {
       background-color: var(--bg-panel);
       border-bottom: 1px solid var(--border-color);
@@ -60,7 +58,6 @@
     button.btn-danger { background-color: rgba(239, 68, 68, 0.2); border-color: var(--mc-red); color: var(--mc-red); }
     button.btn-danger:hover { background-color: var(--mc-red); color: #fff; }
 
-    /* Grid Snapping Settings in Header */
     .grid-control {
       display: flex;
       align-items: center;
@@ -81,10 +78,8 @@
       font-size: 11px;
     }
 
-    /* Workspace */
     .app-container { display: flex; flex: 1; height: calc(100vh - 50px); overflow: hidden; }
 
-    /* Left Sidebar */
     .sidebar-left {
       width: 260px;
       background-color: var(--bg-panel);
@@ -137,7 +132,6 @@
     .tree-action-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px 4px; font-size: 12px; border-radius: 2px; }
     .tree-action-btn:hover { color: var(--text-main); background: var(--bg-input); }
 
-    /* Center Viewport */
     .viewport {
       flex: 1;
       background-color: #08090b;
@@ -149,7 +143,6 @@
       padding: 40px;
     }
 
-    /* Canvas Frame */
     #canvas-wrapper {
       position: relative;
       background-color: #121212;
@@ -165,7 +158,6 @@
       background-size: var(--grid-size) var(--grid-size);
     }
 
-    /* Accurate Bedrock UI Element Rendering */
     .ui-element {
       position: absolute;
       box-sizing: border-box;
@@ -176,7 +168,6 @@
       touch-action: none;
       image-rendering: pixelated;
       background-repeat: no-repeat;
-      background-size: 100% 100%;
     }
 
     .ui-element.selected {
@@ -184,24 +175,10 @@
       outline-offset: 1px;
     }
 
-    /* Bedrock Font Styling */
-    .mc-font-ten {
-      font-family: 'Minecraft', monospace;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-    }
-    .mc-font-regular {
-      font-family: 'Minecraft', monospace;
-      font-weight: 400;
-      letter-spacing: 0px;
-    }
+    .mc-font-ten { font-family: 'Minecraft', monospace; font-weight: 700; }
+    .mc-font-regular { font-family: 'Minecraft', monospace; font-weight: 400; }
 
-    /* Realistic 9-Slice Simulation for Buttons and Panels */
     .ui-type-button {
-      border-style: solid;
-      border-width: 4px;
-      border-image-slice: 4 fill;
-      border-image-repeat: stretch;
       background-color: #3b3b3b;
       display: flex;
       flex-direction: column;
@@ -217,38 +194,13 @@
       background: rgba(0,0,0,0.4);
       border: 1px dashed rgba(255,255,255,0.2);
       border-radius: 2px;
-      image-rendering: pixelated;
     }
 
-    .ui-type-panel {
-      border-style: solid;
-      border-width: 4px;
-      border-image-slice: 4 fill;
-      border-image-repeat: stretch;
-      background-color: rgba(18, 18, 18, 0.85);
-    }
+    .ui-type-panel { background-color: rgba(18, 18, 18, 0.85); }
+    .ui-type-title { color: #ffffff; padding: 0 8px; }
+    .ui-type-body { color: #e0e0e0; padding: 4px 8px; line-height: 1.3; }
+    .ui-type-close { background-color: #8b0000; border: 1px solid #000; color: #ffffff; }
 
-    .ui-type-title {
-      color: #ffffff;
-      padding: 0 8px;
-    }
-
-    .ui-type-body {
-      color: #e0e0e0;
-      padding: 4px 8px;
-      line-height: 1.3;
-    }
-
-    .ui-type-close {
-      background-color: #8b0000;
-      border: 1px solid #000;
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* Right Sidebar: Inspector */
     .sidebar-right {
       width: 320px;
       background-color: var(--bg-panel);
@@ -277,13 +229,13 @@
       user-select: text;
     }
     .prop-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .prop-row-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 4px; }
     
     .toggle-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
     .slider-row { display: flex; align-items: center; gap: 8px; }
     .slider-row input[type="range"] { flex: 1; accent-color: var(--accent); }
     .slider-val { font-size: 11px; font-family: monospace; min-width: 32px; text-align: right; }
 
-    /* Modals */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -321,11 +273,9 @@
 </head>
 <body>
 
-  <!-- Header -->
   <header>
     <div class="brand">⛏ Bedrock JSON-UI Studio</div>
     <div class="toolbar-actions">
-      <!-- Grid Snapping Control -->
       <div class="grid-control">
         <label><input type="checkbox" id="chk-grid" checked onchange="toggleGrid(this.checked)"> Grid Snap</label>
         <select id="sel-grid-size" onchange="setGridSize(+this.value)">
@@ -345,10 +295,7 @@
     </div>
   </header>
 
-  <!-- Workspace -->
   <div class="app-container">
-
-    <!-- Left Sidebar: Controls & Tree Hierarchy -->
     <div class="sidebar-left">
       <div class="sidebar-section">
         <div class="section-title">Add Elements</div>
@@ -366,16 +313,13 @@
         <div class="section-title">Hierarchy & Layers</div>
       </div>
 
-      <!-- Live Tree Manager -->
       <div class="tree-view" id="element-tree"></div>
     </div>
 
-    <!-- Center Viewport -->
     <div class="viewport" id="viewport">
       <div id="canvas-wrapper" class="grid-on" style="width: 350px; height: 200px;"></div>
     </div>
 
-    <!-- Right Sidebar: Properties & Texture Selector -->
     <div class="sidebar-right">
       <div class="inspector-header">
         <span>Property Inspector</span>
@@ -385,10 +329,8 @@
         <p style="font-size: 12px; color: var(--text-muted);">Select an element on canvas or in the layer hierarchy to edit its properties.</p>
       </div>
     </div>
-
   </div>
 
-  <!-- Live JSON Preview Modal -->
   <div class="modal-overlay" id="preview-modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -404,7 +346,6 @@
     </div>
   </div>
 
-  <!-- Export Code Modal -->
   <div class="modal-overlay" id="export-modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -424,7 +365,6 @@
     </div>
   </div>
 
-  <!-- Builder Script Logic -->
   <script>
     const canvas = document.getElementById('canvas-wrapper');
     const treeView = document.getElementById('element-tree');
@@ -471,6 +411,39 @@
       return Math.round(val / gridSize) * gridSize;
     }
 
+    // Auto-fetch 9-slice definition from companion .json file
+    async function autoFetchNineSlice(el) {
+      if (!el.texture) return;
+      try {
+        const res = await fetch(`${el.texture}.json`);
+        if (res.ok) {
+          const data = await res.json();
+          const ns = data.nineslice_size;
+          if (ns !== undefined) {
+            if (typeof ns === 'number') {
+              el.sliceTop = el.sliceRight = el.sliceBottom = el.sliceLeft = ns;
+            } else if (Array.isArray(ns)) {
+              if (ns.length === 4) {
+                // Bedrock: [left, top, right, bottom]
+                el.sliceLeft = ns[0];
+                el.sliceTop = ns[1];
+                el.sliceRight = ns[2];
+                el.sliceBottom = ns[3];
+              } else if (ns.length === 2) {
+                el.sliceLeft = el.sliceRight = ns[0];
+                el.sliceTop = el.sliceBottom = ns[1];
+              }
+            }
+            el.useNineSlice = true;
+            renderCanvas();
+            updateInspector();
+          }
+        }
+      } catch (err) {
+        // Handled silently if .json does not exist
+      }
+    }
+
     function addElement(type) {
       const id = 'el_' + Date.now();
       let newEl = {
@@ -491,22 +464,27 @@
         textAlignment: 'center',
         texture: type === 'button' ? 'textures/bakaui/button_light' : type === 'close' ? 'textures/bakaui/close_button' : 'textures/bakaui/custom_bg_dark',
         collectionIndex: type === 'button' ? buttonCount++ : null,
+        useNineSlice: type === 'button' || type === 'panel',
+        sliceTop: 4,
+        sliceRight: 4,
+        sliceBottom: 4,
+        sliceLeft: 4,
         visible: true
       };
 
       if (type === 'panel') { newEl.w = 320; newEl.h = 180; newEl.x = 16; newEl.y = 10; }
-      if (type === 'title') { newEl.w = 320; newEl.h = 24; newEl.x = 16; newEl.y = 10; newEl.fontSize = 1.2; newEl.textColor = '#ffffff'; }
-      if (type === 'close') { newEl.w = 14; newEl.h = 14; newEl.x = 320; newEl.y = 14; newEl.text = 'X'; newEl.layer = 64; }
-      if (type === 'body') { newEl.w = 288; newEl.h = 24; newEl.x = 32; newEl.y = 40; newEl.textAlignment = 'left'; newEl.textColor = '#e0e0e0'; }
+      if (type === 'title') { newEl.w = 320; newEl.h = 24; newEl.x = 16; newEl.y = 10; newEl.fontSize = 1.2; newEl.useNineSlice = false; }
+      if (type === 'close') { newEl.w = 14; newEl.h = 14; newEl.x = 320; newEl.y = 14; newEl.text = 'X'; newEl.layer = 64; newEl.useNineSlice = false; }
+      if (type === 'body') { newEl.w = 288; newEl.h = 24; newEl.x = 32; newEl.y = 40; newEl.textAlignment = 'left'; newEl.textColor = '#e0e0e0'; newEl.useNineSlice = false; }
       if (type === 'button') { newEl.w = 64; newEl.h = 64; newEl.x = 32 + (newEl.collectionIndex * 72); newEl.y = 80; newEl.textColor = '#000000'; }
 
-      // Snap Initial Dimensions
       newEl.x = snap(newEl.x);
       newEl.y = snap(newEl.y);
       newEl.w = snap(newEl.w);
       newEl.h = snap(newEl.h);
 
       elements.push(newEl);
+      autoFetchNineSlice(newEl);
       renderAll();
       selectElement(id);
     }
@@ -527,13 +505,27 @@
         div.style.zIndex = el.layer;
         div.style.color = el.textColor || '#ffffff';
 
-        // Apply Texture Simulation & 9-Slice
-        if (el.texture) {
+        // Precise 9-Slice or Background Image Application
+        if (el.useNineSlice && el.texture) {
+          const t = el.sliceTop || 4;
+          const r = el.sliceRight || 4;
+          const b = el.sliceBottom || 4;
+          const l = el.sliceLeft || 4;
+
+          div.style.borderStyle = 'solid';
+          div.style.borderWidth = `${t}px ${r}px ${b}px ${l}px`;
           div.style.borderImageSource = `url('${el.texture}.png')`;
+          div.style.borderImageSlice = `${t} ${r} ${b} ${l} fill`;
+          div.style.borderImageRepeat = 'stretch';
+          div.style.backgroundImage = 'none';
+        } else if (el.texture) {
+          div.style.borderStyle = 'none';
+          div.style.borderWidth = '0px';
+          div.style.borderImageSource = 'none';
           div.style.backgroundImage = `url('${el.texture}.png')`;
+          div.style.backgroundSize = '100% 100%';
         }
 
-        // Apply Font Styling
         const fontClass = el.fontType === 'MinecraftTen' ? 'mc-font-ten' : 'mc-font-regular';
         const shadowStyle = el.shadow ? 'text-shadow: 1px 1px 0px rgba(0,0,0,0.85);' : '';
 
@@ -547,7 +539,6 @@
           div.style.justifyContent = el.textAlignment === 'left' ? 'flex-start' : el.textAlignment === 'right' ? 'flex-end' : 'center';
         }
 
-        // Precise Pointer Dragging with Snap Engine
         div.onpointerdown = (e) => {
           e.stopPropagation();
           div.setPointerCapture(e.pointerId);
@@ -562,14 +553,9 @@
             const deltaX = moveEvent.clientX - startMouseX;
             const deltaY = moveEvent.clientY - startMouseY;
 
-            let nextX = startElemX + deltaX;
-            let nextY = startElemY + deltaY;
+            let nextX = snap(startElemX + deltaX);
+            let nextY = snap(startElemY + deltaY);
 
-            // Snap positioning
-            nextX = snap(nextX);
-            nextY = snap(nextY);
-
-            // Boundary clamping
             nextX = Math.max(0, Math.min(canvas.clientWidth - el.w, nextX));
             nextY = Math.max(0, Math.min(canvas.clientHeight - el.h, nextY));
 
@@ -699,18 +685,36 @@
         </div>
 
         <div class="prop-card">
-          <div class="prop-card-title">Texture</div>
+          <div class="prop-card-title">Texture & 9-Slice</div>
           <div class="prop-group">
             <label>BakaUI Preset</label>
-            <select onchange="updateProp('texture', this.value)">
+            <select onchange="updateTexturePreset(this.value)">
               <option value="">-- Choose Texture --</option>
               ${TEXTURE_PRESETS.map(tp => `<option value="${tp.path}" ${el.texture === tp.path ? 'selected' : ''}>${tp.name}</option>`).join('')}
             </select>
           </div>
           <div class="prop-group">
             <label>Custom Texture Path</label>
-            <input type="text" value="${el.texture}" onchange="updateProp('texture', this.value)">
+            <input type="text" value="${el.texture}" onchange="updateTexturePreset(this.value)">
           </div>
+          
+          <div class="toggle-row" style="margin-top: 4px;">
+            <label>Enable 9-Slice Border</label>
+            <input type="checkbox" ${el.useNineSlice ? 'checked' : ''} onchange="updateProp('useNineSlice', this.checked)">
+          </div>
+
+          ${el.useNineSlice ? `
+            <div class="prop-group">
+              <label>Slice Insets (Top / Right / Bottom / Left)</label>
+              <div class="prop-row-4">
+                <input type="number" title="Top" value="${el.sliceTop}" onchange="updateProp('sliceTop', +this.value)">
+                <input type="number" title="Right" value="${el.sliceRight}" onchange="updateProp('sliceRight', +this.value)">
+                <input type="number" title="Bottom" value="${el.sliceBottom}" onchange="updateProp('sliceBottom', +this.value)">
+                <input type="number" title="Left" value="${el.sliceLeft}" onchange="updateProp('sliceLeft', +this.value)">
+              </div>
+            </div>
+          ` : ''}
+
           <div class="prop-group">
             <label>Alpha / Opacity</label>
             <div class="slider-row">
@@ -771,6 +775,15 @@
 
         <button class="btn btn-danger" style="margin-top: 6px;" onclick="deleteSelected()">🗑 Delete Element</button>
       `;
+    }
+
+    function updateTexturePreset(path) {
+      const el = elements.find(e => e.id === selectedId);
+      if (!el) return;
+      el.texture = path;
+      autoFetchNineSlice(el);
+      renderAll();
+      updateInspector();
     }
 
     function updateProp(prop, val) {
