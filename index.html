@@ -26,7 +26,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; user-select: none; }
     body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-    /* Header */
+    /* Header Toolbar */
     header {
       background-color: var(--bg-panel);
       border-bottom: 1px solid var(--border-color);
@@ -54,7 +54,8 @@
       align-items: center;
       gap: 6px;
     }
-    button.btn:hover { background-color: var(--border-color); }
+    button.btn:hover:not(:disabled) { background-color: var(--border-color); }
+    button.btn:disabled { opacity: 0.4; cursor: not-allowed; }
     button.btn-primary { background-color: var(--accent); color: #000; border-color: var(--accent); }
     button.btn-primary:hover { background-color: var(--accent-hover); }
     button.btn-danger { background-color: rgba(239, 68, 68, 0.2); border-color: var(--mc-red); color: var(--mc-red); }
@@ -80,7 +81,7 @@
       font-size: 11px;
     }
 
-    /* Workspace */
+    /* Workspace Layout */
     .app-container { display: flex; flex: 1; height: calc(100vh - 52px); overflow: hidden; }
 
     /* Left Sidebar */
@@ -90,7 +91,7 @@
       border-right: 1px solid var(--border-color);
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow-y: auto;
     }
     .sidebar-section { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
     .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); font-weight: 700; }
@@ -118,6 +119,7 @@
       flex-direction: column;
       padding: 8px;
       gap: 4px;
+      min-height: 140px;
     }
     .tree-item {
       display: flex;
@@ -136,7 +138,7 @@
     .tree-action-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px 4px; font-size: 12px; border-radius: 2px; }
     .tree-action-btn:hover { color: var(--text-main); background: var(--bg-input); }
 
-    /* Center Viewport with background.png support */
+    /* Center Viewport */
     .viewport {
       flex: 1;
       background-color: #050608;
@@ -162,14 +164,15 @@
       image-rendering: pixelated;
     }
 
+    /* Transparent / Subtle Grid Overlay */
     #canvas-wrapper.grid-on {
       background-image: 
-        linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+        linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
       background-size: var(--grid-size) var(--grid-size);
     }
 
-    /* Canvas UI Elements */
+    /* UI Elements */
     .ui-element {
       position: absolute;
       box-sizing: border-box;
@@ -183,7 +186,7 @@
       outline-offset: 1px;
     }
 
-    /* Background Texture Layer */
+    /* Independent Texture Background Layer */
     .ui-bg-layer {
       position: absolute;
       inset: 0;
@@ -194,7 +197,7 @@
       z-index: 1;
     }
 
-    /* Content Layer */
+    /* Content Layer (Solid 100% Text & Icon Opacity) */
     .ui-content-layer {
       position: relative;
       z-index: 2;
@@ -207,7 +210,7 @@
       overflow: hidden;
     }
 
-    /* Minecraft Fonts */
+    /* Fonts */
     .mc-font-ten { font-family: 'Minecraft', monospace; font-weight: 700; letter-spacing: 0.5px; }
     .mc-font-regular { font-family: 'Minecraft', monospace; font-weight: 400; }
 
@@ -333,7 +336,11 @@
   <header>
     <div class="brand">⛏ Bedrock JSON-UI Studio</div>
     <div class="toolbar-actions">
-      <!-- Zoom Scale Dropdown -->
+      <!-- Undo / Redo -->
+      <button class="btn" id="btn-undo" onclick="undo()" title="Undo (Ctrl+Z)">↩ Undo</button>
+      <button class="btn" id="btn-redo" onclick="redo()" title="Redo (Ctrl+Y)">↪ Redo</button>
+
+      <!-- Zoom Scale Selection -->
       <div class="control-pill">
         <span>Zoom</span>
         <select id="sel-zoom" onchange="setZoomScale(+this.value)">
@@ -369,7 +376,7 @@
   <!-- Workspace -->
   <div class="app-container">
 
-    <!-- Left Sidebar: Controls & Tree Hierarchy -->
+    <!-- Left Sidebar: Controls, Form Binding & Tree Hierarchy -->
     <div class="sidebar-left">
       <div class="sidebar-section">
         <div class="section-title">Add Elements</div>
@@ -377,14 +384,24 @@
           <button class="comp-btn" onclick="addElement('panel')">🔲 Panel</button>
           <button class="comp-btn" onclick="addElement('image')">🖼 Image</button>
           <button class="comp-btn" onclick="addElement('title')">🏷 Title Bar</button>
+          <button class="comp-btn" onclick="addElement('body')">📄 Body Label</button>
           <button class="comp-btn" onclick="addElement('button')">🔘 Action Button</button>
-          <button class="comp-btn" onclick="addElement('divider')">➖ Custom Divider</button>
+          <button class="comp-btn" onclick="addElement('divider')">➖ Divider</button>
           <button class="comp-btn" onclick="addElement('close')">❌ Close Btn</button>
         </div>
       </div>
 
+      <div class="sidebar-section">
+        <div class="section-title">ActionFormData Form Binding</div>
+        <div class="prop-group">
+          <label>Form Title Binding Filter</label>
+          <input type="text" id="inp-form-binding" value="§fCustom Shop§r" oninput="updateTitleFilter(this.value)" placeholder="e.g. §fCustom Shop§r">
+          <small style="color:var(--text-muted); font-size:10px;">Matches the title in ActionFormData to display this layout.</small>
+        </div>
+      </div>
+
       <div class="sidebar-section" style="padding-bottom: 4px;">
-        <div class="section-title">Hierarchy & Layers</div>
+        <div class="section-title">Hierarchy & Layers <small style="font-size:10px; font-weight:normal;">(Hold Shift to Multi-select)</small></div>
       </div>
 
       <div class="tree-view" id="element-tree"></div>
@@ -402,7 +419,7 @@
         <span id="inspect-id-badge" style="color:var(--text-muted); font-size:11px;">No Selection</span>
       </div>
       <div class="inspector-body" id="inspector-content">
-        <p style="font-size: 12px; color: var(--text-muted);">Select an element on canvas to modify properties.</p>
+        <p style="font-size: 12px; color: var(--text-muted);">Select an element on canvas to inspect and edit properties.</p>
       </div>
     </div>
 
@@ -450,7 +467,7 @@
     const inspectorContent = document.getElementById('inspector-content');
 
     let elements = [];
-    let selectedId = null;
+    let selectedIds = [];
     let titleFilter = "§fCustom Shop§r";
     let namespace = "custom_shop";
     let buttonCount = 0;
@@ -459,7 +476,13 @@
     let gridSnap = true;
     let gridSize = 8;
 
+    // History Stack for Undo / Redo
+    let historyStack = [];
+    let historyIndex = -1;
+    const MAX_HISTORY = 50;
+
     const MC_COLORS = [
+      { code: "§f", name: "§f White (Default)", hex: "#ffffff" },
       { code: "§0", name: "§0 Black", hex: "#000000" },
       { code: "§1", name: "§1 Dark Blue", hex: "#0000aa" },
       { code: "§2", name: "§2 Dark Green", hex: "#00aa00" },
@@ -475,7 +498,6 @@
       { code: "§c", name: "§c Red", hex: "#ff5555" },
       { code: "§d", name: "§d Light Purple", hex: "#ff55ff" },
       { code: "§e", name: "§e Yellow", hex: "#ffff55" },
-      { code: "§f", name: "§f White", hex: "#ffffff" },
       { code: "§g", name: "§g Minecoin Gold", hex: "#ddd605" }
     ];
 
@@ -489,6 +511,59 @@
       { name: "Close Button", path: "textures/bakaui/close_button" },
       { name: "Close Button Hover", path: "textures/bakaui/close_button_hover" }
     ];
+
+    // Undo / Redo Engine
+    function recordState() {
+      const state = JSON.stringify(elements);
+      if (historyIndex >= 0 && historyStack[historyIndex] === state) return;
+      historyStack = historyStack.slice(0, historyIndex + 1);
+      historyStack.push(state);
+      if (historyStack.length > MAX_HISTORY) historyStack.shift();
+      historyIndex = historyStack.length - 1;
+      updateUndoRedoButtons();
+    }
+
+    function undo() {
+      if (historyIndex > 0) {
+        historyIndex--;
+        elements = JSON.parse(historyStack[historyIndex]);
+        renderAll();
+        updateInspector();
+        updateUndoRedoButtons();
+      }
+    }
+
+    function redo() {
+      if (historyIndex < historyStack.length - 1) {
+        historyIndex++;
+        elements = JSON.parse(historyStack[historyIndex]);
+        renderAll();
+        updateInspector();
+        updateUndoRedoButtons();
+      }
+    }
+
+    function updateUndoRedoButtons() {
+      document.getElementById('btn-undo').disabled = (historyIndex <= 0);
+      document.getElementById('btn-redo').disabled = (historyIndex >= historyStack.length - 1);
+    }
+
+    // Keyboard Shortcuts (Ctrl+Z / Ctrl+Y)
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) redo(); else undo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        redo();
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedIds.length > 0) {
+          e.preventDefault();
+          deleteSelected();
+        }
+      }
+    });
 
     function setZoomScale(val) {
       zoomScale = val;
@@ -514,6 +589,10 @@
     function snap(val) {
       if (!gridSnap) return Math.round(val);
       return Math.round(val / gridSize) * gridSize;
+    }
+
+    function updateTitleFilter(val) {
+      titleFilter = val;
     }
 
     async function autoFetchNineSlice(el) {
@@ -557,13 +636,13 @@
         h: 32,
         layer: type === 'panel' ? 1 : type === 'image' ? 2 : type === 'divider' ? 10 : 4,
         alpha: 1.0,
-        text: type === 'title' ? 'Menu Title' : type === 'button' ? 'Button' : '',
+        text: type === 'title' ? 'Menu Title' : type === 'body' ? 'Sample description text...' : type === 'button' ? 'Button' : '',
         fontType: 'MinecraftTen',
         fontSize: 1.0,
-        textColor: type === 'button' ? '#000000' : '#ffffff',
-        mcColorCode: type === 'button' ? '§0' : '§f',
+        textColor: '#ffffff',
+        mcColorCode: '§f',
         shadow: true,
-        textAlignment: 'center',
+        textAlignment: type === 'body' ? 'left' : 'center',
         textOffsetX: 0,
         textOffsetY: 20,
         iconOffsetX: 0,
@@ -581,6 +660,7 @@
 
       if (type === 'panel') { newEl.w = 320; newEl.h = 180; newEl.x = 16; newEl.y = 10; }
       if (type === 'title') { newEl.w = 320; newEl.h = 24; newEl.x = 16; newEl.y = 10; newEl.fontSize = 1.2; newEl.useNineSlice = false; }
+      if (type === 'body') { newEl.w = 288; newEl.h = 24; newEl.x = 32; newEl.y = 40; newEl.fontType = 'MinecraftRegular'; newEl.useNineSlice = false; }
       if (type === 'divider') { newEl.w = 320; newEl.h = 5; newEl.x = 16; newEl.y = 36; newEl.layer = 10; }
       if (type === 'close') { newEl.w = 14; newEl.h = 14; newEl.x = 320; newEl.y = 14; newEl.layer = 64; newEl.useNineSlice = false; }
       if (type === 'button') { newEl.w = 64; newEl.h = 64; newEl.x = 32 + (newEl.collectionIndex * 72); newEl.y = 80; }
@@ -591,9 +671,11 @@
       newEl.h = snap(newEl.h);
 
       elements.push(newEl);
+      selectedIds = [id];
       autoFetchNineSlice(newEl);
+      recordState();
       renderAll();
-      selectElement(id);
+      updateInspector();
     }
 
     function renderCanvas() {
@@ -601,9 +683,10 @@
       elements.forEach(el => {
         if (!el.visible) return;
 
+        const isSelected = selectedIds.includes(el.id);
         const div = document.createElement('div');
         div.id = el.id;
-        div.className = `ui-element ui-type-${el.type} ${el.id === selectedId ? 'selected' : ''}`;
+        div.className = `ui-element ui-type-${el.type} ${isSelected ? 'selected' : ''}`;
         div.style.left = el.x + 'px';
         div.style.top = el.y + 'px';
         div.style.width = el.w + 'px';
@@ -636,7 +719,7 @@
         }
         div.appendChild(bgLayer);
 
-        // 2. Content Layer
+        // 2. Content Layer (Solid Text / Icon)
         const contentLayer = document.createElement('div');
         contentLayer.className = 'ui-content-layer';
 
@@ -650,7 +733,7 @@
               <div class="btn-label-text ${fontClass}" style="transform: translate(${el.textOffsetX || 0}px, ${el.textOffsetY || 0}px); font-size:${11 * el.fontSize}px; ${shadowStyle}">${el.text}</div>
             </div>
           `;
-        } else if (el.type === 'title') {
+        } else if (el.type === 'title' || el.type === 'body') {
           contentLayer.innerHTML = `<span class="${fontClass}" style="font-size:${12 * el.fontSize}px; ${shadowStyle}">${el.text || ''}</span>`;
           contentLayer.style.justifyContent = el.textAlignment === 'left' ? 'flex-start' : el.textAlignment === 'right' ? 'flex-end' : 'center';
         } else if (el.type === 'close') {
@@ -658,8 +741,8 @@
         }
         div.appendChild(contentLayer);
 
-        // 3. Resize Handles on Active Selection
-        if (el.id === selectedId) {
+        // 3. Single-Element Resize Handles
+        if (isSelected && selectedIds.length === 1) {
           ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].forEach(dir => {
             const handle = document.createElement('div');
             handle.className = `resize-handle handle-${dir}`;
@@ -712,6 +795,7 @@
               function onResizeUp() {
                 window.removeEventListener('pointermove', onResizeMove);
                 window.removeEventListener('pointerup', onResizeUp);
+                recordState();
                 renderAll();
               }
 
@@ -723,33 +807,58 @@
           });
         }
 
-        // 4. Element Drag Movement
+        // 4. Element Drag Movement (With Multi-Select Drag Engine)
         div.onpointerdown = (e) => {
           if (e.target.classList.contains('resize-handle')) return;
-
           e.stopPropagation();
-          setActiveSelection(el.id);
+
+          if (e.shiftKey || e.ctrlKey) {
+            if (selectedIds.includes(el.id)) {
+              selectedIds = selectedIds.filter(id => id !== el.id);
+            } else {
+              selectedIds.push(el.id);
+            }
+          } else {
+            if (!selectedIds.includes(el.id)) {
+              selectedIds = [el.id];
+            }
+          }
+
+          renderAll();
+          updateInspector();
 
           const startMouseX = e.clientX;
           const startMouseY = e.clientY;
-          const startElemX = el.x;
-          const startElemY = el.y;
+          const initialPosMap = new Map();
+          selectedIds.forEach(id => {
+            const targetEl = elements.find(item => item.id === id);
+            if (targetEl) initialPosMap.set(id, { x: targetEl.x, y: targetEl.y, w: targetEl.w, h: targetEl.h });
+          });
 
           function onDragMove(moveEvent) {
             const deltaX = (moveEvent.clientX - startMouseX) / zoomScale;
             const deltaY = (moveEvent.clientY - startMouseY) / zoomScale;
 
-            let nextX = snap(startElemX + deltaX);
-            let nextY = snap(startElemY + deltaY);
+            selectedIds.forEach(id => {
+              const targetEl = elements.find(item => item.id === id);
+              const init = initialPosMap.get(id);
+              if (targetEl && init) {
+                let nextX = snap(init.x + deltaX);
+                let nextY = snap(init.y + deltaY);
 
-            nextX = Math.max(0, Math.min(canvas.clientWidth - el.w, nextX));
-            nextY = Math.max(0, Math.min(canvas.clientHeight - el.h, nextY));
+                nextX = Math.max(0, Math.min(canvas.clientWidth - targetEl.w, nextX));
+                nextY = Math.max(0, Math.min(canvas.clientHeight - targetEl.h, nextY));
 
-            el.x = nextX;
-            el.y = nextY;
+                targetEl.x = nextX;
+                targetEl.y = nextY;
 
-            div.style.left = el.x + 'px';
-            div.style.top = el.y + 'px';
+                const node = document.getElementById(targetEl.id);
+                if (node) {
+                  node.style.left = nextX + 'px';
+                  node.style.top = nextY + 'px';
+                }
+              }
+            });
 
             updateInspectorCoordinates();
           }
@@ -757,6 +866,7 @@
           function onDragUp() {
             window.removeEventListener('pointermove', onDragMove);
             window.removeEventListener('pointerup', onDragUp);
+            recordState();
             renderAll();
           }
 
@@ -772,8 +882,19 @@
       treeView.innerHTML = '';
       elements.slice().reverse().forEach(el => {
         const item = document.createElement('div');
-        item.className = `tree-item ${el.id === selectedId ? 'selected' : ''}`;
-        item.onclick = () => selectElement(el.id);
+        const isSelected = selectedIds.includes(el.id);
+        item.className = `tree-item ${isSelected ? 'selected' : ''}`;
+        
+        item.onclick = (e) => {
+          if (e.shiftKey || e.ctrlKey) {
+            if (selectedIds.includes(el.id)) selectedIds = selectedIds.filter(id => id !== el.id);
+            else selectedIds.push(el.id);
+          } else {
+            selectedIds = [el.id];
+          }
+          renderAll();
+          updateInspector();
+        };
 
         item.innerHTML = `
           <span>${el.name} <small style="color:var(--text-muted)">(${el.type})</small></span>
@@ -795,13 +916,18 @@
         const temp = elements[idx];
         elements[idx] = elements[targetIdx];
         elements[targetIdx] = temp;
+        recordState();
         renderAll();
       }
     }
 
     function toggleVisibility(id) {
       const el = elements.find(e => e.id === id);
-      if (el) { el.visible = !el.visible; renderAll(); }
+      if (el) { 
+        el.visible = !el.visible; 
+        recordState();
+        renderAll(); 
+      }
     }
 
     function renderAll() {
@@ -809,52 +935,60 @@
       renderTree();
     }
 
-    function setActiveSelection(id) {
-      selectedId = id;
-      document.querySelectorAll('.ui-element').forEach(node => {
-        node.classList.toggle('selected', node.id === id);
-      });
-      renderTree();
-      updateInspector();
-    }
-
-    function selectElement(id) {
-      selectedId = id;
-      renderAll();
-      updateInspector();
-    }
-
     function updateTextColor(val) {
-      const el = elements.find(e => e.id === selectedId);
-      if (!el) return;
+      if (selectedIds.length === 0) return;
       const matched = MC_COLORS.find(c => c.hex.toLowerCase() === val.toLowerCase());
-      if (matched) {
-        el.textColor = matched.hex;
-        el.mcColorCode = matched.code;
-      }
+      selectedIds.forEach(id => {
+        const el = elements.find(e => e.id === id);
+        if (el && matched) {
+          el.textColor = matched.hex;
+          el.mcColorCode = matched.code;
+        }
+      });
+      recordState();
       renderAll();
       updateInspector();
     }
 
     function updateInspector() {
-      const el = elements.find(e => e.id === selectedId);
       const badge = document.getElementById('inspect-id-badge');
 
-      if (!el) {
+      if (selectedIds.length === 0) {
         badge.innerText = 'No Selection';
         inspectorContent.innerHTML = `<p style="font-size: 12px; color: var(--text-muted);">Select an element on canvas to inspect and edit properties.</p>`;
         return;
       }
 
+      if (selectedIds.length > 1) {
+        badge.innerText = `${selectedIds.length} SELECTED`;
+        inspectorContent.innerHTML = `
+          <div class="prop-card">
+            <div class="prop-card-title">Multi-Selection Action</div>
+            <p style="font-size: 12px; color: var(--text-muted);">${selectedIds.length} elements selected together. You can drag them simultaneously on the canvas.</p>
+            <div class="prop-group" style="margin-top:8px;">
+              <label>Bulk Text Color (§)</label>
+              <select onchange="updateTextColor(this.value)">
+                ${MC_COLORS.map(c => `<option value="${c.hex}" style="color:${c.hex}; background:#1a1e26; font-weight:bold;">${c.name}</option>`).join('')}
+              </select>
+            </div>
+            <button class="btn btn-danger" style="margin-top: 10px;" onclick="deleteSelected()">🗑 Delete Selected (${selectedIds.length})</button>
+          </div>
+        `;
+        return;
+      }
+
+      const el = elements.find(e => e.id === selectedIds[0]);
+      if (!el) return;
+
       badge.innerText = `${el.type.toUpperCase()}`;
 
       let textCardHtml = '';
-      if (el.type === 'button' || el.type === 'title') {
+      if (el.type === 'button' || el.type === 'title' || el.type === 'body') {
         textCardHtml = `
           <div class="prop-card">
-            <div class="prop-card-title">${el.type === 'button' ? 'Button Label & Alignment' : 'ActionForm Title'}</div>
+            <div class="prop-card-title">${el.type === 'button' ? 'Button Label & Alignment' : el.type === 'title' ? 'ActionForm Title' : 'Body Description'}</div>
             <div class="prop-group">
-              <label>${el.type === 'button' ? 'Button Text' : 'Title Text'}</label>
+              <label>${el.type === 'button' ? 'Button Text' : el.type === 'title' ? 'Title Text' : 'Body Text'}</label>
               <input type="text" value="${el.text}" onchange="updateProp('text', this.value)">
             </div>
             
@@ -1003,23 +1137,32 @@
     }
 
     function updateTexturePreset(path) {
-      const el = elements.find(e => e.id === selectedId);
-      if (!el) return;
-      el.texture = path;
-      autoFetchNineSlice(el);
+      if (selectedIds.length === 0) return;
+      selectedIds.forEach(id => {
+        const el = elements.find(e => e.id === id);
+        if (el) {
+          el.texture = path;
+          autoFetchNineSlice(el);
+        }
+      });
+      recordState();
       renderAll();
       updateInspector();
     }
 
     function updateProp(prop, val) {
-      const el = elements.find(e => e.id === selectedId);
-      if (!el) return;
-      el[prop] = val;
+      if (selectedIds.length === 0) return;
+      selectedIds.forEach(id => {
+        const el = elements.find(e => e.id === id);
+        if (el) el[prop] = val;
+      });
+      recordState();
       renderAll();
     }
 
     function updateInspectorCoordinates() {
-      const el = elements.find(e => e.id === selectedId);
+      if (selectedIds.length !== 1) return;
+      const el = elements.find(e => e.id === selectedIds[0]);
       if (!el) return;
       const ix = document.getElementById('inp-x');
       const iy = document.getElementById('inp-y');
@@ -1032,8 +1175,9 @@
     }
 
     function deleteSelected() {
-      elements = elements.filter(e => e.id !== selectedId);
-      selectedId = null;
+      elements = elements.filter(e => !selectedIds.includes(e.id));
+      selectedIds = [];
+      recordState();
       renderAll();
       updateInspector();
     }
@@ -1093,6 +1237,22 @@
                 }
               };
             }
+            if (el.type === 'body') {
+              return {
+                [`body_text_${i}`]: {
+                  "type": "label",
+                  "offset": [el.x, el.y],
+                  "size": [el.w, el.h],
+                  "layer": el.layer,
+                  "text": "#form_text",
+                  "font_type": el.fontType,
+                  "font_scale_factor": el.fontSize,
+                  "text_alignment": el.textAlignment,
+                  "shadow": el.shadow,
+                  "bindings": [{ "binding_name": "#form_text" }]
+                }
+              };
+            }
             return {
               [`${el.type}_${i}`]: {
                 "type": el.type === 'image' || el.type === 'divider' ? 'image' : 'panel',
@@ -1146,6 +1306,9 @@
     function closeExportModal() {
       document.getElementById('export-modal').style.display = 'none';
     }
+
+    // Initialize State
+    recordState();
   </script>
 </body>
 </html>
