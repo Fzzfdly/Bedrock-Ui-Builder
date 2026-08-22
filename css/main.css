@@ -1,0 +1,147 @@
+/* ==========================================================================
+   Minecraft Bedrock JSON-UI Studio - Main Stylesheet
+   ========================================================================== */
+
+:root {
+  --bg-dark: #090a0f;
+  --bg-panel: #13161f;
+  --bg-card: #1b202c;
+  --bg-input: #232a3b;
+  --bg-hover: #2c354a;
+  --border-color: #2f384d;
+  --border-focus: #4b6fff;
+  
+  --accent: #00d26a;
+  --accent-hover: #00b359;
+  --accent-light: rgba(0, 210, 106, 0.15);
+  
+  --mc-gold: #ffaa00;
+  --mc-aqua: #55ffff;
+  --mc-red: #ff5555;
+  --mc-green: #55ff55;
+  --mc-yellow: #ffff55;
+  --mc-blue: #5555ff;
+  --mc-purple: #aa00aa;
+  
+  --text-main: #f3f4f6;
+  --text-muted: #8c97aa;
+  --text-dim: #5c667a;
+  
+  --grid-size: 10px;
+  --zoom-scale: 1.5;
+  
+  --header-height: 52px;
+  --sidebar-left-width: 300px;
+  --sidebar-right-width: 330px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  user-select: none;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header & Top Bar */
+header {
+  background-color: var(--bg-panel);
+  border-bottom: 1px solid var(--border-color);
+  height: var(--header-height);
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 100;
+  gap: 12px;
+}
+
+.brand {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--mc-gold);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Minecraft', monospace;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+}
+
+.brand .badge-ver {
+  font-family: sans-serif;
+  font-size: 10px;
+  background: rgba(255, 170, 0, 0.2);
+  color: var(--mc-gold);
+  border: 1px solid rgba(255, 170, 0, 0.4);
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* App Main Container */
+.app-container {
+  display: flex;
+  flex: 1;
+  height: calc(100vh - var(--header-height));
+  overflow: hidden;
+}
+
+/* Toast Notifications */
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--bg-card);
+  border: 1px solid var(--accent);
+  color: var(--text-main);
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: toastIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
+}
+
+.toast.toast-error {
+  border-color: var(--mc-red);
+  color: #ff8888;
+}
+
+.toast.toast-info {
+  border-color: var(--mc-aqua);
+  color: var(--mc-aqua);
+}
+
+@keyframes toastIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
