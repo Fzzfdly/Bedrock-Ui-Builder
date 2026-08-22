@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft Bedrock JSON-UI Studio (Custom Button Edition)</title>
+  <title>Minecraft Bedrock JSON-UI Studio (BakaUI All-in-One)</title>
   <link href="https://fonts.cdnfonts.com/css/minecraft-4" rel="stylesheet">
   <style>
     :root {
@@ -164,7 +164,7 @@
       image-rendering: pixelated;
     }
 
-    /* Subtle Transparent Grid */
+    /* Subtle Grid */
     #canvas-wrapper.grid-on {
       background-image: 
         linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
@@ -172,7 +172,7 @@
       background-size: var(--grid-size) var(--grid-size);
     }
 
-    /* Template Chrome Simulation (Matches BakaUI Architecture) */
+    /* Template Chrome Simulation */
     .template-chrome {
       position: absolute;
       inset: 0;
@@ -202,18 +202,40 @@
       border-image-repeat: stretch;
       image-rendering: pixelated;
     }
+    
+    /* Stacked Close Button matching in-game bg + icon */
     .chrome-close {
       position: absolute;
       top: -20px;
       right: -5px;
       width: 14px;
       height: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .chrome-close-bg {
+      position: absolute;
+      inset: -2px;
+      border-style: solid;
+      border-width: 3px;
+      border-image-source: url('textures/bakaui/custom_bg_divider.png');
+      border-image-slice: 3 fill;
+      border-image-repeat: stretch;
+      image-rendering: pixelated;
+      z-index: 1;
+    }
+    .chrome-close-icon {
+      position: relative;
+      z-index: 2;
+      width: 12px;
+      height: 12px;
       background-image: url('textures/bakaui/close_button.png');
       background-size: 100% 100%;
       image-rendering: pixelated;
     }
     
-    /* Adaptive Form Body Container with Normal Font & 3:3 Nine-Slice */
+    /* Adaptive Form Body Container (Centered normal text) */
     .chrome-body-container {
       position: absolute;
       top: 12px;
@@ -222,7 +244,7 @@
       height: 28px;
       display: flex;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: center;
       padding: 0 11px;
       z-index: 6;
       transition: height 0.15s ease;
@@ -243,13 +265,15 @@
       position: relative;
       z-index: 2;
       font-family: 'Minecraft', monospace;
-      font-weight: 400;
+      font-weight: 400; /* Normal regular font */
       font-size: 11px;
-      color: #ffffff;
+      color: #ffffff; /* Centered white */
+      text-align: center;
       text-shadow: 1px 1px 0px rgba(0,0,0,0.85);
       line-height: 1.3;
       word-break: break-word;
       pointer-events: none;
+      width: 100%;
     }
 
     /* UI Elements */
@@ -474,18 +498,26 @@
           <label>Menu Identifier Name</label>
           <input type="text" id="inp-menu-name" value="custom_shop" oninput="updateMenuName(this.value)">
         </div>
-        <div class="prop-group">
-          <label>Body Description Text Preview</label>
-          <textarea id="inp-body-text" rows="2" oninput="updateBodyText(this.value)">Choose an item from the list below:</textarea>
+
+        <div class="toggle-row" style="margin-top: 4px;">
+          <label style="font-size:11px; font-weight:600; color:var(--text-muted);">Enable Body Section</label>
+          <input type="checkbox" id="chk-enable-body" checked onchange="toggleBody(this.checked)">
         </div>
-        <div class="prop-row">
+
+        <div id="body-settings-wrapper" style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;">
           <div class="prop-group">
-            <label>Body Height (px)</label>
-            <input type="number" id="inp-body-height" value="28" min="20" max="120" onchange="updateBodyHeight(+this.value)">
+            <label>Body Description Text Preview</label>
+            <textarea id="inp-body-text" rows="2" oninput="updateBodyText(this.value)">Choose an item from the list below:</textarea>
           </div>
-          <div class="prop-group">
-            <label>Auto-Height</label>
-            <button class="btn" style="margin-top:2px;" onclick="autoFitBodyHeight()">Auto Fit</button>
+          <div class="prop-row">
+            <div class="prop-group">
+              <label>Body Height (px)</label>
+              <input type="number" id="inp-body-height" value="28" min="20" max="120" onchange="updateBodyHeight(+this.value)">
+            </div>
+            <div class="prop-group">
+              <label>Auto-Height</label>
+              <button class="btn" style="margin-top:2px;" onclick="autoFitBodyHeight()">Auto Fit</button>
+            </div>
           </div>
         </div>
       </div>
@@ -503,7 +535,14 @@
         <div class="template-chrome">
           <div class="chrome-label" id="disp-chrome-label">§fCustom Shop§r</div>
           <div class="chrome-divider"></div>
-          <div class="chrome-close"></div>
+          
+          <!-- Stacked Close Button Visualizer -->
+          <div class="chrome-close">
+            <div class="chrome-close-bg"></div>
+            <div class="chrome-close-icon"></div>
+          </div>
+          
+          <!-- Form Body Container -->
           <div class="chrome-body-container" id="disp-body-container">
             <div class="chrome-body-bg"></div>
             <div class="chrome-body-text" id="disp-body-text">Choose an item from the list below:</div>
@@ -566,6 +605,7 @@
     let selectedIds = [];
     let titleFilter = "§fCustom Shop§r";
     let menuName = "custom_shop";
+    let enableBody = true;
     let bodyText = "Choose an item from the list below:";
     let bodyHeight = 28;
     let buttonCount = 0;
@@ -598,6 +638,7 @@
       { code: "§g", name: "§g Minecoin Gold", hex: "#ddd605" }
     ];
 
+    // Standard 3:3 default nine-slice
     const TEXTURE_PRESETS = [
       { name: "Button Light", path: "textures/bakaui/button_light", slice: [3, 3, 3, 3] },
       { name: "Button Light Hover", path: "textures/bakaui/button_lighthover", slice: [3, 3, 3, 3] },
@@ -609,7 +650,7 @@
     ];
 
     function recordState() {
-      const state = JSON.stringify({ elements, bodyHeight, bodyText, titleFilter, menuName });
+      const state = JSON.stringify({ elements, enableBody, bodyHeight, bodyText, titleFilter, menuName });
       if (historyIndex >= 0 && historyStack[historyIndex] === state) return;
       historyStack = historyStack.slice(0, historyIndex + 1);
       historyStack.push(state);
@@ -623,6 +664,7 @@
         historyIndex--;
         const data = JSON.parse(historyStack[historyIndex]);
         elements = data.elements;
+        enableBody = data.enableBody !== undefined ? data.enableBody : true;
         bodyHeight = data.bodyHeight || 28;
         bodyText = data.bodyText || "";
         titleFilter = data.titleFilter || "§fCustom Shop§r";
@@ -639,6 +681,7 @@
         historyIndex++;
         const data = JSON.parse(historyStack[historyIndex]);
         elements = data.elements;
+        enableBody = data.enableBody !== undefined ? data.enableBody : true;
         bodyHeight = data.bodyHeight || 28;
         bodyText = data.bodyText || "";
         titleFilter = data.titleFilter || "§fCustom Shop§r";
@@ -655,14 +698,19 @@
       document.getElementById('btn-redo').disabled = (historyIndex >= historyStack.length - 1);
     }
 
+    // Keyboard Shortcuts (Ctrl+Z, Ctrl+Y, Ctrl+D Duplicate)
     window.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
         e.preventDefault();
         if (e.shiftKey) redo(); else undo();
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
         e.preventDefault();
         redo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        duplicateSelected();
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
         if (selectedIds.length > 0) {
           e.preventDefault();
@@ -670,6 +718,37 @@
         }
       }
     });
+
+    function duplicateSelected() {
+      if (selectedIds.length === 0) return;
+      const newSelectedIds = [];
+
+      selectedIds.forEach(id => {
+        const target = elements.find(el => el.id === id);
+        if (!target) return;
+
+        const clone = JSON.parse(JSON.stringify(target));
+        clone.id = 'el_' + Date.now() + Math.random().toString(36).substr(2, 4);
+        clone.x = snap(clone.x + gridSize);
+        clone.y = snap(clone.y + gridSize);
+
+        if (clone.type === 'custom_button') {
+          clone.name = `button_${buttonCount}`;
+          clone.collectionIndex = buttonCount++;
+          clone.text = `Option ${clone.collectionIndex}`;
+        } else {
+          clone.name = `${clone.type}_${elements.length + 1}`;
+        }
+
+        elements.push(clone);
+        newSelectedIds.push(clone.id);
+      });
+
+      selectedIds = newSelectedIds;
+      recordState();
+      renderAll();
+      updateInspector();
+    }
 
     function setZoomScale(val) {
       zoomScale = val;
@@ -708,6 +787,13 @@
       recordState();
     }
 
+    function toggleBody(enabled) {
+      enableBody = enabled;
+      document.getElementById('disp-body-container').style.display = enabled ? 'flex' : 'none';
+      document.getElementById('body-settings-wrapper').style.display = enabled ? 'flex' : 'none';
+      recordState();
+    }
+
     function updateBodyText(val) {
       bodyText = val;
       document.getElementById('disp-body-text').innerText = val;
@@ -731,6 +817,10 @@
       document.getElementById('disp-chrome-label').innerText = titleFilter;
       document.getElementById('disp-body-text').innerText = bodyText;
       document.getElementById('disp-body-container').style.height = bodyHeight + 'px';
+      document.getElementById('disp-body-container').style.display = enableBody ? 'flex' : 'none';
+      document.getElementById('body-settings-wrapper').style.display = enableBody ? 'flex' : 'none';
+      document.getElementById('chk-enable-body').checked = enableBody;
+
       document.getElementById('inp-form-binding').value = titleFilter;
       document.getElementById('inp-menu-name').value = menuName;
       document.getElementById('inp-body-text').value = bodyText;
@@ -746,7 +836,7 @@
         name: isButton ? `button_${buttonCount}` : `${type}_${elements.length + 1}`,
         type,
         x: 16,
-        y: Math.max(50, bodyHeight + 24),
+        y: enableBody ? Math.max(50, bodyHeight + 24) : 16,
         w: 64,
         h: 64,
         paddingW: 69,
@@ -757,7 +847,7 @@
         text: isButton ? `Option ${buttonCount}` : '',
         fontType: 'MinecraftTen',
         fontSize: 1.0,
-        textColor: '#ffffff',
+        textColor: '#ffffff', // Default White
         mcColorCode: '§f',
         shadow: true,
         texture: isButton ? 'textures/bakaui/button_light' : type === 'divider' ? 'textures/bakaui/custom_bg_divider' : 'textures/bakaui/custom_bg_dark',
@@ -775,7 +865,7 @@
         newEl.w = 300;
         newEl.h = 5;
         newEl.x = 10;
-        newEl.y = bodyHeight + 16;
+        newEl.y = enableBody ? bodyHeight + 16 : 24;
       }
 
       newEl.x = snap(newEl.x);
@@ -886,7 +976,6 @@
                 el.w = nextW;
                 el.h = nextH;
 
-                // Sync padding with dimensions automatically
                 el.paddingW = nextW + 5;
                 el.paddingH = nextH + 5;
 
@@ -1066,7 +1155,8 @@
           <div class="prop-card">
             <div class="prop-card-title">Multi-Selection Action</div>
             <p style="font-size: 12px; color: var(--text-muted);">${selectedIds.length} elements selected together.</p>
-            <button class="btn btn-danger" style="margin-top: 10px;" onclick="deleteSelected()">🗑 Delete Selected (${selectedIds.length})</button>
+            <button class="btn" style="margin-top:8px;" onclick="duplicateSelected()">📋 Duplicate Selected (Ctrl+D)</button>
+            <button class="btn btn-danger" style="margin-top: 6px;" onclick="deleteSelected()">🗑 Delete Selected (${selectedIds.length})</button>
           </div>
         `;
         return;
@@ -1186,6 +1276,7 @@
 
         ${buttonSpecificHtml}
 
+        <button class="btn" style="margin-top: 6px;" onclick="duplicateSelected()">📋 Duplicate Element (Ctrl+D)</button>
         <button class="btn btn-danger" style="margin-top: 6px;" onclick="deleteSelected()">🗑 Delete Element</button>
       `;
     }
@@ -1252,6 +1343,83 @@
       const cw = parseFloat(canvas.style.width) || 322.5;
       const ch = parseFloat(canvas.style.height) || 200;
 
+      const stackControls = [
+        {
+          "padding": {
+            "type": "panel",
+            "size": ["100%", 8]
+          }
+        }
+      ];
+
+      // Add Body if enabled
+      if (enableBody) {
+        stackControls.push({
+          "my_form_body": {
+            "type": "panel",
+            "anchor_from": "top_middle",
+            "size": ["100%", bodyHeight],
+            "layer": 8,
+            "controls": [
+              {
+                "form_body_text": {
+                  "type": "label",
+                  "text": "#form_text",
+                  "layer": 8,
+                  "bindings": [
+                    {
+                      "binding_name": "#form_text"
+                    }
+                  ]
+                }
+              },
+              {
+                "my_form_background@server_form.my_form_background_dark": {
+                  "size": ["100% - 22px", "100%"]
+                }
+              }
+            ]
+          }
+        });
+      }
+
+      // Add Button Panel
+      stackControls.push({
+        "button_panel": {
+          "type": "panel",
+          "size": ["100%", "100%"],
+          "collection_name": "form_buttons",
+          "controls": elements.map((el, i) => {
+            if (el.type === 'custom_button') {
+              return {
+                [`${el.name}@server_form.custom_button`]: {
+                  "offset": [el.x, el.y],
+                  "$button_size": [el.w, el.h],
+                  "$padding_size": [el.paddingW || (el.w + 5), el.paddingH || (el.h + 5)],
+                  "$icon_size": [el.iconSize || 32, el.iconSize || 32],
+                  ...(el.texture ? { "$default_button_texture": el.texture } : {}),
+                  "collection_index": el.collectionIndex,
+                  "anchor_from": "top_left",
+                  "anchor_to": "top_left"
+                }
+              };
+            }
+            return {
+              [`${el.name}`]: {
+                "type": "image",
+                "size": [el.w, el.h],
+                "offset": [el.x, el.y],
+                "layer": el.layer,
+                ...(el.alpha !== 1.0 ? { "alpha": el.alpha } : {}),
+                "texture": el.texture || "textures/bakaui/custom_bg_dark",
+                "anchor_from": "top_left",
+                "anchor_to": "top_left"
+              }
+            };
+          })
+        }
+      });
+
       return {
         [dialogId]: {
           "type": "panel",
@@ -1289,76 +1457,7 @@
                       "type": "stack_panel",
                       "size": ["100%", "100%"],
                       "orientation": "vertical",
-                      "controls": [
-                        {
-                          "padding": {
-                            "type": "panel",
-                            "size": ["100%", 8]
-                          }
-                        },
-                        {
-                          "my_form_body": {
-                            "type": "panel",
-                            "anchor_from": "top_middle",
-                            "size": ["100%", bodyHeight],
-                            "layer": 8,
-                            "controls": [
-                              {
-                                "form_body_text": {
-                                  "type": "label",
-                                  "text": "#form_text",
-                                  "layer": 8,
-                                  "bindings": [
-                                    {
-                                      "binding_name": "#form_text"
-                                    }
-                                  ]
-                                }
-                              },
-                              {
-                                "my_form_background@server_form.my_form_background_dark": {
-                                  "size": ["100% - 22px", "100%"]
-                                }
-                              }
-                            ]
-                          }
-                        },
-                        {
-                          "button_panel": {
-                            "type": "panel",
-                            "size": ["100%", "100%"],
-                            "collection_name": "form_buttons",
-                            "controls": elements.map((el, i) => {
-                              if (el.type === 'custom_button') {
-                                return {
-                                  [`${el.name}@server_form.custom_button`]: {
-                                    "offset": [el.x, el.y],
-                                    "$button_size": [el.w, el.h],
-                                    "$padding_size": [el.paddingW || (el.w + 5), el.paddingH || (el.h + 5)],
-                                    "$icon_size": [el.iconSize || 32, el.iconSize || 32],
-                                    ...(el.texture ? { "$default_button_texture": el.texture } : {}),
-                                    "collection_index": el.collectionIndex,
-                                    "anchor_from": "top_left",
-                                    "anchor_to": "top_left"
-                                  }
-                                };
-                              }
-                              return {
-                                [`${el.name}`]: {
-                                  "type": "image",
-                                  "size": [el.w, el.h],
-                                  "offset": [el.x, el.y],
-                                  "layer": el.layer,
-                                  ...(el.alpha !== 1.0 ? { "alpha": el.alpha } : {}),
-                                  "texture": el.texture || "textures/bakaui/custom_bg_dark",
-                                  "anchor_from": "top_left",
-                                  "anchor_to": "top_left"
-                                }
-                              };
-                            })
-                          }
-                        }
-                      ]
+                      "controls": stackControls
                     }
                   }
                 ]
