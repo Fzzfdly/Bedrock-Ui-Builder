@@ -7,20 +7,20 @@
   <link href="https://fonts.cdnfonts.com/css/minecraft-4" rel="stylesheet">
   <style>
     :root {
-      --bg-dark: #090a0d;
-      --bg-panel: #13151b;
-      --bg-card: #1c2028;
-      --bg-input: #262c37;
-      --border-color: #333c4d;
+      --bg-dark: #08090c;
+      --bg-panel: #12141a;
+      --bg-card: #1a1e26;
+      --bg-input: #242a36;
+      --border-color: #313a4a;
       --accent: #00d26a;
       --accent-hover: #00b359;
       --mc-gold: #ffaa00;
       --mc-aqua: #55ffff;
       --mc-red: #ff5555;
       --text-main: #f3f4f6;
-      --text-muted: #8b95a5;
+      --text-muted: #8a94a4;
       --grid-size: 8px;
-      --zoom-scale: 1.5;
+      --zoom-scale: 1.6;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; user-select: none; }
@@ -139,7 +139,7 @@
     /* Center Viewport */
     .viewport {
       flex: 1;
-      background-color: #060709;
+      background-color: #050608;
       position: relative;
       overflow: auto;
       display: flex;
@@ -150,7 +150,7 @@
 
     #canvas-wrapper {
       position: relative;
-      background-color: #111113;
+      background-color: #101114;
       box-shadow: 0 20px 60px rgba(0,0,0,0.95);
       touch-action: none;
       transform: scale(var(--zoom-scale));
@@ -179,7 +179,7 @@
       outline-offset: 1px;
     }
 
-    /* Isolated Texture Background Layer */
+    /* Independent Texture Background Layer */
     .ui-bg-layer {
       position: absolute;
       inset: 0;
@@ -190,7 +190,7 @@
       z-index: 1;
     }
 
-    /* Content Layer (Keeps 100% Solid Opacity) */
+    /* Content Layer (Solid 100% Text & Icon Opacity) */
     .ui-content-layer {
       position: relative;
       z-index: 2;
@@ -207,21 +207,21 @@
     .mc-font-ten { font-family: 'Minecraft', monospace; font-weight: 700; letter-spacing: 0.5px; }
     .mc-font-regular { font-family: 'Minecraft', monospace; font-weight: 400; }
 
-    /* Button Preset Structure */
+    /* Button Structure */
     .btn-container {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 4px;
+      gap: 3px;
       width: 100%;
       height: 100%;
       padding: 4px;
     }
 
     .btn-icon {
-      width: 32px;
-      height: 32px;
+      width: 30px;
+      height: 30px;
       background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
@@ -231,8 +231,8 @@
     /* Resize Handles */
     .resize-handle {
       position: absolute;
-      width: 7px;
-      height: 7px;
+      width: 8px;
+      height: 8px;
       background: var(--mc-aqua);
       border: 1px solid #000;
       z-index: 99;
@@ -242,10 +242,10 @@
     .handle-ne { top: -4px; right: -4px; cursor: nesw-resize; }
     .handle-se { bottom: -4px; right: -4px; cursor: nwse-resize; }
     .handle-sw { bottom: -4px; left: -4px; cursor: nesw-resize; }
-    .handle-n  { top: -4px; left: calc(50% - 3.5px); cursor: ns-resize; }
-    .handle-s  { bottom: -4px; left: calc(50% - 3.5px); cursor: ns-resize; }
-    .handle-w  { top: calc(50% - 3.5px); left: -4px; cursor: ew-resize; }
-    .handle-e  { top: calc(50% - 3.5px); right: -4px; cursor: ew-resize; }
+    .handle-n  { top: -4px; left: calc(50% - 4px); cursor: ns-resize; }
+    .handle-s  { bottom: -4px; left: calc(50% - 4px); cursor: ns-resize; }
+    .handle-w  { top: calc(50% - 4px); left: -4px; cursor: ew-resize; }
+    .handle-e  { top: calc(50% - 4px); right: -4px; cursor: ew-resize; }
 
     /* Right Sidebar: Inspector */
     .sidebar-right {
@@ -325,14 +325,15 @@
   <header>
     <div class="brand">⛏ Bedrock JSON-UI Studio</div>
     <div class="toolbar-actions">
-      <!-- Zoom Scale Selection -->
+      <!-- Zoom Scale Dropdown -->
       <div class="control-pill">
         <span>Zoom</span>
         <select id="sel-zoom" onchange="setZoomScale(+this.value)">
           <option value="1.0">100%</option>
           <option value="1.25">125%</option>
-          <option value="1.5" selected>150% (Default)</option>
-          <option value="1.75">175%</option>
+          <option value="1.5">150%</option>
+          <option value="1.6" selected>160% (Default)</option>
+          <option value="1.8">180%</option>
           <option value="2.0">200%</option>
         </select>
       </div>
@@ -360,7 +361,7 @@
   <!-- Workspace -->
   <div class="app-container">
 
-    <!-- Left Sidebar: Element Creation & Layers -->
+    <!-- Left Sidebar: Controls & Tree Hierarchy -->
     <div class="sidebar-left">
       <div class="sidebar-section">
         <div class="section-title">Add Elements</div>
@@ -380,19 +381,19 @@
       <div class="tree-view" id="element-tree"></div>
     </div>
 
-    <!-- Center Canvas Viewport -->
+    <!-- Center Viewport -->
     <div class="viewport" id="viewport">
       <div id="canvas-wrapper" class="grid-on" style="width: 350px; height: 200px;"></div>
     </div>
 
-    <!-- Right Sidebar: Properties -->
+    <!-- Right Sidebar: Properties & Texture Selector -->
     <div class="sidebar-right">
       <div class="inspector-header">
         <span>Property Inspector</span>
         <span id="inspect-id-badge" style="color:var(--text-muted); font-size:11px;">No Selection</span>
       </div>
       <div class="inspector-body" id="inspector-content">
-        <p style="font-size: 12px; color: var(--text-muted);">Select an element on the canvas to inspect and edit properties.</p>
+        <p style="font-size: 12px; color: var(--text-muted);">Select an element on canvas to modify properties.</p>
       </div>
     </div>
 
@@ -445,9 +446,30 @@
     let namespace = "custom_shop";
     let buttonCount = 0;
 
-    let zoomScale = 1.5;
+    let zoomScale = 1.6;
     let gridSnap = true;
     let gridSize = 8;
+
+    // Complete Minecraft Bedrock § Color Table
+    const MC_COLORS = [
+      { code: "§0", name: "§0 Black", hex: "#000000" },
+      { code: "§1", name: "§1 Dark Blue", hex: "#0000aa" },
+      { code: "§2", name: "§2 Dark Green", hex: "#00aa00" },
+      { code: "§3", name: "§3 Dark Aqua", hex: "#00aaaa" },
+      { code: "§4", name: "§4 Dark Red", hex: "#aa0000" },
+      { code: "§5", name: "§5 Dark Purple", hex: "#aa00aa" },
+      { code: "§6", name: "§6 Gold", hex: "#ffaa00" },
+      { code: "§7", name: "§7 Gray", hex: "#aaaaaa" },
+      { code: "§8", name: "§8 Dark Gray", hex: "#555555" },
+      { code: "§9", name: "§9 Blue", hex: "#5555ff" },
+      { code: "§a", name: "§a Green", hex: "#55ff55" },
+      { code: "§b", name: "§b Aqua", hex: "#55ffff" },
+      { code: "§c", name: "§c Red", hex: "#ff5555" },
+      { code: "§d", name: "§d Light Purple", hex: "#ff55ff" },
+      { code: "§e", name: "§e Yellow", hex: "#ffff55" },
+      { code: "§f", name: "§f White", hex: "#ffffff" },
+      { code: "§g", name: "§g Minecoin Gold", hex: "#ddd605" }
+    ];
 
     const TEXTURE_PRESETS = [
       { name: "Button Light", path: "textures/bakaui/button_light" },
@@ -530,7 +552,8 @@
         text: type === 'title' ? 'Menu Title' : type === 'button' ? 'Button' : '',
         fontType: 'MinecraftTen',
         fontSize: 1.0,
-        textColor: '#ffffff',
+        textColor: type === 'button' ? '#000000' : '#ffffff',
+        mcColorCode: type === 'button' ? '§0' : '§f',
         shadow: true,
         textAlignment: 'center',
         texture: type === 'button' ? 'textures/bakaui/button_light' : type === 'close' ? 'textures/bakaui/close_button' : 'textures/bakaui/custom_bg_dark',
@@ -547,7 +570,7 @@
       if (type === 'panel') { newEl.w = 320; newEl.h = 180; newEl.x = 16; newEl.y = 10; }
       if (type === 'title') { newEl.w = 320; newEl.h = 24; newEl.x = 16; newEl.y = 10; newEl.fontSize = 1.2; newEl.useNineSlice = false; }
       if (type === 'close') { newEl.w = 14; newEl.h = 14; newEl.x = 320; newEl.y = 14; newEl.layer = 64; newEl.useNineSlice = false; }
-      if (type === 'button') { newEl.w = 64; newEl.h = 64; newEl.x = 32 + (newEl.collectionIndex * 72); newEl.y = 80; newEl.textColor = '#000000'; }
+      if (type === 'button') { newEl.w = 64; newEl.h = 64; newEl.x = 32 + (newEl.collectionIndex * 72); newEl.y = 80; }
 
       newEl.x = snap(newEl.x);
       newEl.y = snap(newEl.y);
@@ -575,7 +598,7 @@
         div.style.zIndex = el.layer;
         div.style.color = el.textColor || '#ffffff';
 
-        // 1. Background Texture Layer (Independent Opacity)
+        // 1. Independent Background Texture Layer
         const bgLayer = document.createElement('div');
         bgLayer.className = 'ui-bg-layer';
         bgLayer.style.opacity = el.alpha;
@@ -600,7 +623,7 @@
         }
         div.appendChild(bgLayer);
 
-        // 2. Content Layer (Keeps 100% Solid Opacity)
+        // 2. Content Layer (Solid 100% Text & Icon Opacity)
         const contentLayer = document.createElement('div');
         contentLayer.className = 'ui-content-layer';
 
@@ -622,7 +645,7 @@
         }
         div.appendChild(contentLayer);
 
-        // 3. Render Resize Handles on Selected Element
+        // 3. Resize Handles on Active Selection
         if (el.id === selectedId) {
           ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].forEach(dir => {
             const handle = document.createElement('div');
@@ -631,8 +654,6 @@
 
             handle.onpointerdown = (e) => {
               e.stopPropagation();
-              handle.setPointerCapture(e.pointerId);
-
               const startMouseX = e.clientX;
               const startMouseY = e.clientY;
               const origX = el.x;
@@ -640,7 +661,7 @@
               const origW = el.w;
               const origH = el.h;
 
-              handle.onpointermove = (moveEv) => {
+              function onResizeMove(moveEv) {
                 const deltaX = (moveEv.clientX - startMouseX) / zoomScale;
                 const deltaY = (moveEv.clientY - startMouseY) / zoomScale;
 
@@ -673,24 +694,27 @@
                 div.style.height = el.h + 'px';
 
                 updateInspectorCoordinates();
-              };
+              }
 
-              handle.onpointerup = (upEv) => {
-                handle.releasePointerCapture(upEv.pointerId);
-                handle.onpointermove = null;
-                handle.onpointerup = null;
+              function onResizeUp() {
+                window.removeEventListener('pointermove', onResizeMove);
+                window.removeEventListener('pointerup', onResizeUp);
                 renderAll();
-              };
+              }
+
+              window.addEventListener('pointermove', onResizeMove);
+              window.addEventListener('pointerup', onResizeUp);
             };
 
             div.appendChild(handle);
           });
         }
 
-        // Element Drag Move
+        // 4. Element Drag Movement via Window Listeners
         div.onpointerdown = (e) => {
+          if (e.target.classList.contains('resize-handle')) return;
+
           e.stopPropagation();
-          div.setPointerCapture(e.pointerId);
           setActiveSelection(el.id);
 
           const startMouseX = e.clientX;
@@ -698,7 +722,7 @@
           const startElemX = el.x;
           const startElemY = el.y;
 
-          div.onpointermove = (moveEvent) => {
+          function onDragMove(moveEvent) {
             const deltaX = (moveEvent.clientX - startMouseX) / zoomScale;
             const deltaY = (moveEvent.clientY - startMouseY) / zoomScale;
 
@@ -715,13 +739,16 @@
             div.style.top = el.y + 'px';
 
             updateInspectorCoordinates();
-          };
+          }
 
-          div.onpointerup = (upEvent) => {
-            div.releasePointerCapture(upEvent.pointerId);
-            div.onpointermove = null;
-            div.onpointerup = null;
-          };
+          function onDragUp() {
+            window.removeEventListener('pointermove', onDragMove);
+            window.removeEventListener('pointerup', onDragUp);
+            renderAll();
+          }
+
+          window.addEventListener('pointermove', onDragMove);
+          window.addEventListener('pointerup', onDragUp);
         };
 
         canvas.appendChild(div);
@@ -771,12 +798,27 @@
 
     function setActiveSelection(id) {
       selectedId = id;
-      renderAll();
+      document.querySelectorAll('.ui-element').forEach(node => {
+        node.classList.toggle('selected', node.id === id);
+      });
+      renderTree();
       updateInspector();
     }
 
     function selectElement(id) {
       selectedId = id;
+      renderAll();
+      updateInspector();
+    }
+
+    function updateTextColor(val) {
+      const el = elements.find(e => e.id === selectedId);
+      if (!el) return;
+      const matched = MC_COLORS.find(c => c.hex.toLowerCase() === val.toLowerCase());
+      if (matched) {
+        el.textColor = matched.hex;
+        el.mcColorCode = matched.code;
+      }
       renderAll();
       updateInspector();
     }
@@ -793,7 +835,7 @@
 
       badge.innerText = `${el.type.toUpperCase()}`;
 
-      // Build Dynamic Inspector (Only title and button show text property cards)
+      // Only Button and Title Bar allow Label / Typography Editing
       let textCardHtml = '';
       if (el.type === 'button' || el.type === 'title') {
         textCardHtml = `
@@ -802,6 +844,12 @@
             <div class="prop-group">
               <label>${el.type === 'button' ? 'Button Text' : 'Title Text'}</label>
               <input type="text" value="${el.text}" onchange="updateProp('text', this.value)">
+            </div>
+            <div class="prop-group">
+              <label>Minecraft Color Code (§)</label>
+              <select onchange="updateTextColor(this.value)">
+                ${MC_COLORS.map(c => `<option value="${c.hex}" ${el.textColor.toLowerCase() === c.hex.toLowerCase() ? 'selected' : ''} style="color:${c.hex}; background:#1a1e26; font-weight:bold;">${c.name}</option>`).join('')}
+              </select>
             </div>
             <div class="prop-row">
               <div class="prop-group">
@@ -822,17 +870,13 @@
             </div>
             <div class="prop-row">
               <div class="prop-group">
-                <label>Text Color</label>
-                <input type="text" value="${el.textColor || '#ffffff'}" onchange="updateProp('textColor', this.value)">
-              </div>
-              <div class="prop-group">
                 <label>Font Scale</label>
                 <input type="number" step="0.1" value="${el.fontSize}" onchange="updateProp('fontSize', +this.value)">
               </div>
-            </div>
-            <div class="toggle-row">
-              <label>Text Shadow</label>
-              <input type="checkbox" ${el.shadow ? 'checked' : ''} onchange="updateProp('shadow', this.checked)">
+              <div class="toggle-row" style="margin-top: 18px;">
+                <label>Text Shadow</label>
+                <input type="checkbox" ${el.shadow ? 'checked' : ''} onchange="updateProp('shadow', this.checked)">
+              </div>
             </div>
           </div>
         `;
@@ -891,7 +935,7 @@
 
           ${el.type === 'button' ? `
             <div class="prop-group">
-              <label>Button Icon (Placeholder: trash.png)</label>
+              <label>Button Icon (Default: trash.png)</label>
               <input type="text" value="${el.iconTexture || 'textures/bakaui/trash'}" onchange="updateProp('iconTexture', this.value)">
             </div>
           ` : ''}
@@ -914,7 +958,7 @@
           ` : ''}
 
           <div class="prop-group">
-            <label>Texture Opacity (Text Stays 100% Solid)</label>
+            <label>Texture Opacity (Text Remains 100% Solid)</label>
             <div class="slider-row">
               <input type="range" min="0" max="1" step="0.05" value="${el.alpha}" oninput="updateProp('alpha', +this.value); document.getElementById('val-alpha').innerText = this.value;">
               <span class="slider-val" id="val-alpha">${el.alpha}</span>
