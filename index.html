@@ -3,21 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft Bedrock JSON-UI Visual Builder</title>
+  <title>Minecraft Bedrock JSON-UI Studio</title>
+  <!-- Minecraft Font CDN -->
+  <link href="https://fonts.cdnfonts.com/css/minecraft-4" rel="stylesheet">
   <style>
     :root {
-      --bg-dark: #0f1115;
-      --bg-panel: #181b20;
-      --bg-card: #21252d;
-      --bg-input: #2a303c;
-      --border-color: #384152;
+      --bg-dark: #0c0d10;
+      --bg-panel: #16181d;
+      --bg-card: #1f232b;
+      --bg-input: #292f3a;
+      --border-color: #353d4c;
       --accent: #00d26a;
       --accent-hover: #00b359;
       --mc-gold: #ffaa00;
       --mc-aqua: #55ffff;
       --mc-red: #ff5555;
       --text-main: #f3f4f6;
-      --text-muted: #9ca3af;
+      --text-muted: #8e98a8;
+      --grid-size: 8px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; user-select: none; }
@@ -34,7 +37,7 @@
       justify-content: space-between;
       z-index: 100;
     }
-    .brand { font-size: 15px; font-weight: 700; color: var(--mc-gold); display: flex; align-items: center; gap: 8px; }
+    .brand { font-size: 15px; font-weight: 700; color: var(--mc-gold); display: flex; align-items: center; gap: 8px; font-family: 'Minecraft', monospace; }
     .toolbar-actions { display: flex; gap: 8px; align-items: center; }
 
     button.btn {
@@ -57,10 +60,31 @@
     button.btn-danger { background-color: rgba(239, 68, 68, 0.2); border-color: var(--mc-red); color: var(--mc-red); }
     button.btn-danger:hover { background-color: var(--mc-red); color: #fff; }
 
-    /* Main Workspace Layout */
+    /* Grid Snapping Settings in Header */
+    .grid-control {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .grid-control select {
+      background: var(--bg-input);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+      padding: 2px 4px;
+      font-size: 11px;
+    }
+
+    /* Workspace */
     .app-container { display: flex; flex: 1; height: calc(100vh - 50px); overflow: hidden; }
 
-    /* Left Sidebar: Components & Hierarchy */
+    /* Left Sidebar */
     .sidebar-left {
       width: 260px;
       background-color: var(--bg-panel);
@@ -87,7 +111,6 @@
     }
     .comp-btn:hover { border-color: var(--accent); background: var(--bg-input); }
 
-    /* File/Element Hierarchy Manager */
     .tree-view {
       flex: 1;
       overflow-y: auto;
@@ -117,9 +140,7 @@
     /* Center Viewport */
     .viewport {
       flex: 1;
-      background-color: #0b0c0e;
-      background-image: radial-gradient(#1f242d 1.5px, transparent 1.5px);
-      background-size: 18px 18px;
+      background-color: #08090b;
       position: relative;
       overflow: auto;
       display: flex;
@@ -128,15 +149,23 @@
       padding: 40px;
     }
 
+    /* Canvas Frame */
     #canvas-wrapper {
       position: relative;
-      background-color: rgba(0, 0, 0, 0.7);
-      border: 2px dashed #444f5c;
-      box-shadow: 0 12px 36px rgba(0,0,0,0.85);
+      background-color: #121212;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.9);
       touch-action: none;
+      image-rendering: pixelated;
     }
 
-    /* Canvas UI Elements */
+    #canvas-wrapper.grid-on {
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+      background-size: var(--grid-size) var(--grid-size);
+    }
+
+    /* Accurate Bedrock UI Element Rendering */
     .ui-element {
       position: absolute;
       box-sizing: border-box;
@@ -144,26 +173,36 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
       touch-action: none;
-      background-size: 100% 100%;
+      image-rendering: pixelated;
       background-repeat: no-repeat;
+      background-size: 100% 100%;
     }
+
     .ui-element.selected {
       outline: 2px solid var(--mc-aqua) !important;
       outline-offset: 1px;
     }
 
-    /* Element Styling */
-    .ui-type-panel { background-color: rgba(30, 41, 59, 0.85); border: 2px solid #64748b; border-radius: 4px; }
-    .ui-type-image { background-color: rgba(51, 65, 85, 0.5); border: 1px dashed #64748b; }
-    .ui-type-title { background-color: #1e293b; color: #fff; font-weight: bold; border-bottom: 2px solid var(--accent); }
-    .ui-type-body { background-color: rgba(15, 23, 42, 0.7); color: #cbd5e1; font-size: 12px; padding: 6px; }
-    .ui-type-close { background-color: #e11d48; color: #fff; font-weight: bold; font-size: 11px; border-radius: 2px; }
+    /* Bedrock Font Styling */
+    .mc-font-ten {
+      font-family: 'Minecraft', monospace;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .mc-font-regular {
+      font-family: 'Minecraft', monospace;
+      font-weight: 400;
+      letter-spacing: 0px;
+    }
+
+    /* Realistic 9-Slice Simulation for Buttons and Panels */
     .ui-type-button {
-      background-color: #334155;
-      border: 2px solid #475569;
-      border-radius: 4px;
+      border-style: solid;
+      border-width: 4px;
+      border-image-slice: 4 fill;
+      border-image-repeat: stretch;
+      background-color: #3b3b3b;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -171,10 +210,45 @@
       gap: 4px;
       padding: 4px;
     }
-    .ui-type-button .btn-icon { width: 32px; height: 32px; background: rgba(0,0,0,0.3); border: 1px dashed #64748b; border-radius: 2px; }
-    .ui-type-button .btn-label { font-size: 11px; text-align: center; }
 
-    /* Right Sidebar: Properties */
+    .ui-type-button .btn-icon {
+      width: 32px;
+      height: 32px;
+      background: rgba(0,0,0,0.4);
+      border: 1px dashed rgba(255,255,255,0.2);
+      border-radius: 2px;
+      image-rendering: pixelated;
+    }
+
+    .ui-type-panel {
+      border-style: solid;
+      border-width: 4px;
+      border-image-slice: 4 fill;
+      border-image-repeat: stretch;
+      background-color: rgba(18, 18, 18, 0.85);
+    }
+
+    .ui-type-title {
+      color: #ffffff;
+      padding: 0 8px;
+    }
+
+    .ui-type-body {
+      color: #e0e0e0;
+      padding: 4px 8px;
+      line-height: 1.3;
+    }
+
+    .ui-type-close {
+      background-color: #8b0000;
+      border: 1px solid #000;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Right Sidebar: Inspector */
     .sidebar-right {
       width: 320px;
       background-color: var(--bg-panel);
@@ -209,7 +283,7 @@
     .slider-row input[type="range"] { flex: 1; accent-color: var(--accent); }
     .slider-val { font-size: 11px; font-family: monospace; min-width: 32px; text-align: right; }
 
-    /* Modal */
+    /* Modals */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -247,14 +321,26 @@
 </head>
 <body>
 
-  <!-- Top Toolbar -->
+  <!-- Header -->
   <header>
-    <div class="brand">⛏ Bedrock JSON-UI Builder</div>
+    <div class="brand">⛏ Bedrock JSON-UI Studio</div>
     <div class="toolbar-actions">
+      <!-- Grid Snapping Control -->
+      <div class="grid-control">
+        <label><input type="checkbox" id="chk-grid" checked onchange="toggleGrid(this.checked)"> Grid Snap</label>
+        <select id="sel-grid-size" onchange="setGridSize(+this.value)">
+          <option value="2">2px</option>
+          <option value="4">4px</option>
+          <option value="8" selected>8px</option>
+          <option value="16">16px</option>
+        </select>
+      </div>
+
       <button class="btn" onclick="setPreset(432, 243)">Wide (432x243)</button>
       <button class="btn" onclick="setPreset(350, 200)">Standard (350x200)</button>
       <button class="btn" onclick="setPreset(322, 200)">Compact (322x200)</button>
       <button class="btn" onclick="setPreset(270, 185)">Mini (270x185)</button>
+      <button class="btn" onclick="openPreviewModal()">🔍 Preview JSON</button>
       <button class="btn btn-primary" onclick="openExportModal()">⚡ Export JSON-UI</button>
     </div>
   </header>
@@ -277,16 +363,16 @@
       </div>
 
       <div class="sidebar-section" style="padding-bottom: 4px;">
-        <div class="section-title">Element Hierarchy / Layers</div>
+        <div class="section-title">Hierarchy & Layers</div>
       </div>
 
       <!-- Live Tree Manager -->
       <div class="tree-view" id="element-tree"></div>
     </div>
 
-    <!-- Center Canvas Viewport -->
+    <!-- Center Viewport -->
     <div class="viewport" id="viewport">
-      <div id="canvas-wrapper" style="width: 350px; height: 200px;"></div>
+      <div id="canvas-wrapper" class="grid-on" style="width: 350px; height: 200px;"></div>
     </div>
 
     <!-- Right Sidebar: Properties & Texture Selector -->
@@ -300,6 +386,22 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- Live JSON Preview Modal -->
+  <div class="modal-overlay" id="preview-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="font-size: 14px;">Live JSON Preview</h3>
+        <button class="btn" onclick="closePreviewModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="prop-group">
+          <label class="section-title">Active Namespace Hierarchy</label>
+          <textarea class="code-box" id="code-preview" style="height: 360px;" readonly></textarea>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Export Code Modal -->
@@ -334,7 +436,9 @@
     let namespace = "custom_shop";
     let buttonCount = 0;
 
-    // Filtered strictly to textures found in your server_form.json
+    let gridSnap = true;
+    let gridSize = 8;
+
     const TEXTURE_PRESETS = [
       { name: "Button Light", path: "textures/bakaui/button_light" },
       { name: "Button Light Hover", path: "textures/bakaui/button_lighthover" },
@@ -346,10 +450,25 @@
       { name: "Close Button Hover", path: "textures/bakaui/close_button_hover" }
     ];
 
+    function toggleGrid(enabled) {
+      gridSnap = enabled;
+      canvas.classList.toggle('grid-on', enabled);
+    }
+
+    function setGridSize(size) {
+      gridSize = size;
+      document.documentElement.style.setProperty('--grid-size', size + 'px');
+    }
+
     function setPreset(w, h) {
       canvas.style.width = w + 'px';
       canvas.style.height = h + 'px';
       renderCanvas();
+    }
+
+    function snap(val) {
+      if (!gridSnap) return Math.round(val);
+      return Math.round(val / gridSize) * gridSize;
     }
 
     function addElement(type) {
@@ -358,27 +477,34 @@
         id,
         name: `${type}_${elements.length + 1}`,
         type,
-        x: 20,
-        y: 20,
-        w: 100,
-        h: 30,
+        x: 16,
+        y: 16,
+        w: 96,
+        h: 32,
         layer: type === 'panel' ? 1 : type === 'image' ? 2 : 4,
         alpha: 1.0,
-        text: type === 'title' ? '#title_text' : type === 'body' ? '#form_text' : 'Button',
+        text: type === 'title' ? 'Menu Title' : type === 'body' ? 'Example body description text...' : 'Button',
         fontType: 'MinecraftTen',
         fontSize: 1.0,
-        shadow: false,
+        textColor: '#ffffff',
+        shadow: true,
         textAlignment: 'center',
         texture: type === 'button' ? 'textures/bakaui/button_light' : type === 'close' ? 'textures/bakaui/close_button' : 'textures/bakaui/custom_bg_dark',
         collectionIndex: type === 'button' ? buttonCount++ : null,
         visible: true
       };
 
-      if (type === 'panel') { newEl.w = 320; newEl.h = 180; newEl.x = 15; newEl.y = 10; }
-      if (type === 'title') { newEl.w = 320; newEl.h = 24; newEl.x = 15; newEl.y = 10; newEl.fontSize = 1.2; }
-      if (type === 'close') { newEl.w = 14; newEl.h = 14; newEl.x = 315; newEl.y = 15; newEl.text = 'X'; newEl.layer = 64; }
-      if (type === 'body') { newEl.w = 290; newEl.h = 24; newEl.x = 30; newEl.y = 40; newEl.textAlignment = 'left'; }
-      if (type === 'button') { newEl.w = 64; newEl.h = 64; newEl.x = 30 + (newEl.collectionIndex * 75); newEl.y = 75; }
+      if (type === 'panel') { newEl.w = 320; newEl.h = 180; newEl.x = 16; newEl.y = 10; }
+      if (type === 'title') { newEl.w = 320; newEl.h = 24; newEl.x = 16; newEl.y = 10; newEl.fontSize = 1.2; newEl.textColor = '#ffffff'; }
+      if (type === 'close') { newEl.w = 14; newEl.h = 14; newEl.x = 320; newEl.y = 14; newEl.text = 'X'; newEl.layer = 64; }
+      if (type === 'body') { newEl.w = 288; newEl.h = 24; newEl.x = 32; newEl.y = 40; newEl.textAlignment = 'left'; newEl.textColor = '#e0e0e0'; }
+      if (type === 'button') { newEl.w = 64; newEl.h = 64; newEl.x = 32 + (newEl.collectionIndex * 72); newEl.y = 80; newEl.textColor = '#000000'; }
+
+      // Snap Initial Dimensions
+      newEl.x = snap(newEl.x);
+      newEl.y = snap(newEl.y);
+      newEl.w = snap(newEl.w);
+      newEl.h = snap(newEl.h);
 
       elements.push(newEl);
       renderAll();
@@ -399,18 +525,29 @@
         div.style.height = el.h + 'px';
         div.style.opacity = el.alpha;
         div.style.zIndex = el.layer;
+        div.style.color = el.textColor || '#ffffff';
 
+        // Apply Texture Simulation & 9-Slice
         if (el.texture) {
+          div.style.borderImageSource = `url('${el.texture}.png')`;
           div.style.backgroundImage = `url('${el.texture}.png')`;
         }
 
+        // Apply Font Styling
+        const fontClass = el.fontType === 'MinecraftTen' ? 'mc-font-ten' : 'mc-font-regular';
+        const shadowStyle = el.shadow ? 'text-shadow: 1px 1px 0px rgba(0,0,0,0.85);' : '';
+
         if (el.type === 'button') {
-          div.innerHTML = `<div class="btn-icon"></div><div class="btn-label">${el.text} (#${el.collectionIndex})</div>`;
+          div.innerHTML = `
+            <div class="btn-icon"></div>
+            <div class="${fontClass}" style="font-size:${11 * el.fontSize}px; ${shadowStyle}">${el.text}</div>
+          `;
         } else {
-          div.innerText = el.text || '';
-          div.style.textAlign = el.textAlignment;
+          div.innerHTML = `<span class="${fontClass}" style="font-size:${12 * el.fontSize}px; ${shadowStyle}">${el.text || ''}</span>`;
+          div.style.justifyContent = el.textAlignment === 'left' ? 'flex-start' : el.textAlignment === 'right' ? 'flex-end' : 'center';
         }
 
+        // Precise Pointer Dragging with Snap Engine
         div.onpointerdown = (e) => {
           e.stopPropagation();
           div.setPointerCapture(e.pointerId);
@@ -425,11 +562,19 @@
             const deltaX = moveEvent.clientX - startMouseX;
             const deltaY = moveEvent.clientY - startMouseY;
 
-            let nextX = Math.max(0, Math.min(canvas.clientWidth - el.w, startElemX + deltaX));
-            let nextY = Math.max(0, Math.min(canvas.clientHeight - el.h, startElemY + deltaY));
+            let nextX = startElemX + deltaX;
+            let nextY = startElemY + deltaY;
 
-            el.x = Math.round(nextX);
-            el.y = Math.round(nextY);
+            // Snap positioning
+            nextX = snap(nextX);
+            nextY = snap(nextY);
+
+            // Boundary clamping
+            nextX = Math.max(0, Math.min(canvas.clientWidth - el.w, nextX));
+            nextY = Math.max(0, Math.min(canvas.clientHeight - el.h, nextY));
+
+            el.x = nextX;
+            el.y = nextY;
 
             div.style.left = el.x + 'px';
             div.style.top = el.y + 'px';
@@ -526,25 +671,25 @@
         </div>
 
         <div class="prop-card">
-          <div class="prop-card-title">Transform & Position</div>
+          <div class="prop-card-title">Transform & Grid Alignment</div>
           <div class="prop-row">
             <div class="prop-group">
               <label>Offset X</label>
-              <input type="number" id="inp-x" value="${el.x}" onchange="updateProp('x', +this.value)">
+              <input type="number" id="inp-x" value="${el.x}" onchange="updateProp('x', snap(+this.value))">
             </div>
             <div class="prop-group">
               <label>Offset Y</label>
-              <input type="number" id="inp-y" value="${el.y}" onchange="updateProp('y', +this.value)">
+              <input type="number" id="inp-y" value="${el.y}" onchange="updateProp('y', snap(+this.value))">
             </div>
           </div>
           <div class="prop-row">
             <div class="prop-group">
               <label>Width</label>
-              <input type="number" value="${el.w}" onchange="updateProp('w', +this.value)">
+              <input type="number" value="${el.w}" onchange="updateProp('w', snap(+this.value))">
             </div>
             <div class="prop-group">
               <label>Height</label>
-              <input type="number" value="${el.h}" onchange="updateProp('h', +this.value)">
+              <input type="number" value="${el.h}" onchange="updateProp('h', snap(+this.value))">
             </div>
           </div>
           <div class="prop-group">
@@ -598,11 +743,14 @@
               </select>
             </div>
           </div>
-          <div class="prop-group">
-            <label>Font Scale Factor</label>
-            <div class="slider-row">
-              <input type="range" min="0.5" max="3.0" step="0.1" value="${el.fontSize}" oninput="updateProp('fontSize', +this.value); document.getElementById('val-font').innerText = this.value;">
-              <span class="slider-val" id="val-font">${el.fontSize}</span>
+          <div class="prop-row">
+            <div class="prop-group">
+              <label>Text Color</label>
+              <input type="text" value="${el.textColor || '#ffffff'}" onchange="updateProp('textColor', this.value)">
+            </div>
+            <div class="prop-group">
+              <label>Font Scale</label>
+              <input type="number" step="0.1" value="${el.fontSize}" onchange="updateProp('fontSize', +this.value)">
             </div>
           </div>
           <div class="toggle-row">
@@ -647,8 +795,8 @@
       updateInspector();
     }
 
-    function openExportModal() {
-      const namespaceJson = {
+    function generateNamespaceJson() {
+      return {
         "namespace": namespace,
         "custom_button": {
           "type": "panel",
@@ -717,6 +865,20 @@
           })
         }
       };
+    }
+
+    function openPreviewModal() {
+      const json = generateNamespaceJson();
+      document.getElementById('code-preview').value = JSON.stringify(json, null, 2);
+      document.getElementById('preview-modal').style.display = 'flex';
+    }
+
+    function closePreviewModal() {
+      document.getElementById('preview-modal').style.display = 'none';
+    }
+
+    function openExportModal() {
+      const namespaceJson = generateNamespaceJson();
 
       const serverFormSnippet = {
         [`${namespace}_panel@${namespace}.${namespace}`]: {
