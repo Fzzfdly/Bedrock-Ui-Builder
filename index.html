@@ -164,7 +164,7 @@
       image-rendering: pixelated;
     }
 
-    /* Subtle Grid */
+    /* Subtle Grid Overlay */
     #canvas-wrapper.grid-on {
       background-image: 
         linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
@@ -172,7 +172,7 @@
       background-size: var(--grid-size) var(--grid-size);
     }
 
-    /* Template Chrome Simulation */
+    /* Template Chrome Overlay (Simulates BakaUI Form Structure 1:1) */
     .template-chrome {
       position: absolute;
       inset: 0;
@@ -203,7 +203,7 @@
       image-rendering: pixelated;
     }
     
-    /* Stacked Close Button matching in-game bg + icon */
+    /* Stacked Close Button with In-Game Background */
     .chrome-close {
       position: absolute;
       top: -20px;
@@ -235,12 +235,12 @@
       image-rendering: pixelated;
     }
     
-    /* Adaptive Form Body Container (Centered normal text) */
+    /* Adaptive Form Body Container (Centered & Normal Font) */
     .chrome-body-container {
       position: absolute;
-      top: 12px;
-      left: 8px;
-      right: 8px;
+      top: 8px;
+      left: 0;
+      right: 0;
       height: 28px;
       display: flex;
       align-items: center;
@@ -274,6 +274,17 @@
       word-break: break-word;
       pointer-events: none;
       width: 100%;
+    }
+
+    /* Button Workspace Container (Matches Button Panel relative origin) */
+    #button-workspace {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      top: 36px;
+      pointer-events: auto;
+      z-index: 10;
     }
 
     /* UI Elements */
@@ -425,7 +436,7 @@
       border: 1px solid var(--border-color);
       border-radius: 4px;
       resize: vertical;
-      height: 380px;
+      height: 220px;
       user-select: text;
     }
   </style>
@@ -532,6 +543,7 @@
     <!-- Center Viewport with Background -->
     <div class="viewport" id="viewport">
       <div id="canvas-wrapper" class="grid-on" style="width: 322.5px; height: 200px;">
+        <!-- Fixed BakaUI Chrome Overlay -->
         <div class="template-chrome">
           <div class="chrome-label" id="disp-chrome-label">§fCustom Shop§r</div>
           <div class="chrome-divider"></div>
@@ -548,6 +560,9 @@
             <div class="chrome-body-text" id="disp-body-text">Choose an item from the list below:</div>
           </div>
         </div>
+
+        <!-- Button Workspace matches in-game stack container position -->
+        <div id="button-workspace"></div>
       </div>
     </div>
 
@@ -568,13 +583,17 @@
   <div class="modal-overlay" id="preview-modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 style="font-size: 14px;">Live JSON Preview</h3>
+        <h3 style="font-size: 14px;">Live JSON Preview (server_form.json)</h3>
         <button class="btn" onclick="closePreviewModal()">✕</button>
       </div>
       <div class="modal-body">
         <div class="prop-group">
-          <label class="section-title">Complete server_form.json Entry</label>
-          <textarea class="code-box" id="code-preview" readonly></textarea>
+          <label class="section-title">1. Custom Button Panel Definition (Place at bottom of server_form.json)</label>
+          <textarea class="code-box" id="code-btn-preview" readonly></textarea>
+        </div>
+        <div class="prop-group">
+          <label class="section-title">2. Dialog Panel Entry (Place inside long_form.controls array)</label>
+          <textarea class="code-box" id="code-dialog-preview" readonly></textarea>
         </div>
       </div>
     </div>
@@ -589,7 +608,11 @@
       </div>
       <div class="modal-body">
         <div class="prop-group">
-          <label class="section-title">Paste directly inside long_form.controls array in server_form.json</label>
+          <label class="section-title">1. Paste at the bottom of server_form.json (outside long_form)</label>
+          <textarea class="code-box" id="code-btn-panel" readonly></textarea>
+        </div>
+        <div class="prop-group">
+          <label class="section-title">2. Paste inside long_form.controls array in server_form.json</label>
           <textarea class="code-box" id="code-dialog-panel" readonly></textarea>
         </div>
       </div>
@@ -598,6 +621,7 @@
 
   <script>
     const canvas = document.getElementById('canvas-wrapper');
+    const workspace = document.getElementById('button-workspace');
     const treeView = document.getElementById('element-tree');
     const inspectorContent = document.getElementById('inspector-content');
 
@@ -638,7 +662,6 @@
       { code: "§g", name: "§g Minecoin Gold", hex: "#ddd605" }
     ];
 
-    // Standard 3:3 default nine-slice
     const TEXTURE_PRESETS = [
       { name: "Button Light", path: "textures/bakaui/button_light", slice: [3, 3, 3, 3] },
       { name: "Button Light Hover", path: "textures/bakaui/button_lighthover", slice: [3, 3, 3, 3] },
@@ -698,7 +721,6 @@
       document.getElementById('btn-redo').disabled = (historyIndex >= historyStack.length - 1);
     }
 
-    // Keyboard Shortcuts (Ctrl+Z, Ctrl+Y, Ctrl+D Duplicate)
     window.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
@@ -789,8 +811,7 @@
 
     function toggleBody(enabled) {
       enableBody = enabled;
-      document.getElementById('disp-body-container').style.display = enabled ? 'flex' : 'none';
-      document.getElementById('body-settings-wrapper').style.display = enabled ? 'flex' : 'none';
+      applyChromeSettings();
       recordState();
     }
 
@@ -821,6 +842,10 @@
       document.getElementById('body-settings-wrapper').style.display = enableBody ? 'flex' : 'none';
       document.getElementById('chk-enable-body').checked = enableBody;
 
+      // Adjust workspace top origin to match in-game button_panel position
+      const wsTop = enableBody ? (8 + bodyHeight + 2) : 8;
+      workspace.style.top = wsTop + 'px';
+
       document.getElementById('inp-form-binding').value = titleFilter;
       document.getElementById('inp-menu-name').value = menuName;
       document.getElementById('inp-body-text').value = bodyText;
@@ -836,7 +861,7 @@
         name: isButton ? `button_${buttonCount}` : `${type}_${elements.length + 1}`,
         type,
         x: 16,
-        y: enableBody ? Math.max(50, bodyHeight + 24) : 16,
+        y: 16, // Relative to button_panel workspace origin!
         w: 64,
         h: 64,
         paddingW: 69,
@@ -862,10 +887,10 @@
       };
 
       if (type === 'divider') {
-        newEl.w = 300;
+        newEl.w = 280;
         newEl.h = 5;
-        newEl.x = 10;
-        newEl.y = enableBody ? bodyHeight + 16 : 24;
+        newEl.x = 8;
+        newEl.y = 8;
       }
 
       newEl.x = snap(newEl.x);
@@ -881,7 +906,7 @@
     }
 
     function renderCanvas() {
-      canvas.querySelectorAll('.ui-element').forEach(n => n.remove());
+      workspace.innerHTML = '';
 
       elements.forEach(el => {
         if (!el.visible) return;
@@ -1036,9 +1061,6 @@
                 let nextX = snap(init.x + deltaX);
                 let nextY = snap(init.y + deltaY);
 
-                nextX = Math.max(0, Math.min(canvas.clientWidth - targetEl.w, nextX));
-                nextY = Math.max(0, Math.min(canvas.clientHeight - targetEl.h, nextY));
-
                 targetEl.x = nextX;
                 targetEl.y = nextY;
 
@@ -1064,7 +1086,7 @@
           window.addEventListener('pointerup', onDragUp);
         };
 
-        canvas.appendChild(div);
+        workspace.appendChild(div);
       });
     }
 
@@ -1337,55 +1359,11 @@
       updateInspector();
     }
 
-    // Generates the single complete self-contained dialog entry using ONLY custom_button
-    function generateCompleteDialogJson() {
-      const dialogId = `bakaui_${menuName}`;
-      const cw = parseFloat(canvas.style.width) || 322.5;
-      const ch = parseFloat(canvas.style.height) || 200;
-
-      const stackControls = [
-        {
-          "padding": {
-            "type": "panel",
-            "size": ["100%", 8]
-          }
-        }
-      ];
-
-      // Add Body if enabled
-      if (enableBody) {
-        stackControls.push({
-          "my_form_body": {
-            "type": "panel",
-            "anchor_from": "top_middle",
-            "size": ["100%", bodyHeight],
-            "layer": 8,
-            "controls": [
-              {
-                "form_body_text": {
-                  "type": "label",
-                  "text": "#form_text",
-                  "layer": 8,
-                  "bindings": [
-                    {
-                      "binding_name": "#form_text"
-                    }
-                  ]
-                }
-              },
-              {
-                "my_form_background@server_form.my_form_background_dark": {
-                  "size": ["100% - 22px", "100%"]
-                }
-              }
-            ]
-          }
-        });
-      }
-
-      // Add Button Panel
-      stackControls.push({
-        "button_panel": {
+    // 1. Button Panel Definition for the root of server_form.json
+    function generateButtonPanelJson() {
+      const panelName = `my_custom_panel_${menuName}`;
+      return {
+        [panelName]: {
           "type": "panel",
           "size": ["100%", "100%"],
           "collection_name": "form_buttons",
@@ -1418,6 +1396,33 @@
             };
           })
         }
+      };
+    }
+
+    // 2. Dialog Definition inside long_form.controls
+    function generateDialogEntryJson() {
+      const dialogId = `bakaui_${menuName}`;
+      const btnPanelRef = `server_form.my_custom_panel_${menuName}`;
+      const cw = parseFloat(canvas.style.width) || 322.5;
+      const ch = parseFloat(canvas.style.height) || 200;
+
+      const stackControls = [
+        {
+          "padding": {
+            "type": "panel",
+            "size": ["100%", 8]
+          }
+        }
+      ];
+
+      if (enableBody) {
+        stackControls.push({
+          "my_form_body@server_form.my_form_body": {}
+        });
+      }
+
+      stackControls.push({
+        [`button_panel@${btnPanelRef}`]: {}
       });
 
       return {
@@ -1479,8 +1484,11 @@
     }
 
     function openPreviewModal() {
-      const fullJson = generateCompleteDialogJson();
-      document.getElementById('code-preview').value = JSON.stringify(fullJson, null, 2);
+      const btnPanel = generateButtonPanelJson();
+      const dialogEntry = generateDialogEntryJson();
+
+      document.getElementById('code-btn-preview').value = JSON.stringify(btnPanel, null, 2);
+      document.getElementById('code-dialog-preview').value = JSON.stringify(dialogEntry, null, 2);
       document.getElementById('preview-modal').style.display = 'flex';
     }
 
@@ -1489,7 +1497,10 @@
     }
 
     function openExportModal() {
-      const dialogEntry = generateCompleteDialogJson();
+      const btnPanel = generateButtonPanelJson();
+      const dialogEntry = generateDialogEntryJson();
+
+      document.getElementById('code-btn-panel').value = JSON.stringify(btnPanel, null, 2);
       document.getElementById('code-dialog-panel').value = JSON.stringify(dialogEntry, null, 2);
       document.getElementById('export-modal').style.display = 'flex';
     }
