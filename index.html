@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft Bedrock JSON-UI Studio (BakaUI Adaptive Edition)</title>
+  <title>Minecraft Bedrock JSON-UI Studio (Custom Button Edition)</title>
   <link href="https://fonts.cdnfonts.com/css/minecraft-4" rel="stylesheet">
   <style>
     :root {
@@ -196,9 +196,9 @@
       right: -9px;
       height: 5px;
       border-style: solid;
-      border-width: 1px 4px 1px 4px;
+      border-width: 3px;
       border-image-source: url('textures/bakaui/custom_bg_divider.png');
-      border-image-slice: 1 4 1 4 fill;
+      border-image-slice: 3 fill;
       border-image-repeat: stretch;
       image-rendering: pixelated;
     }
@@ -213,7 +213,7 @@
       image-rendering: pixelated;
     }
     
-    /* Adaptive Form Body Container */
+    /* Adaptive Form Body Container with Normal Font & 3:3 Nine-Slice */
     .chrome-body-container {
       position: absolute;
       top: 12px;
@@ -231,9 +231,9 @@
       position: absolute;
       inset: 0 11px;
       border-style: solid;
-      border-width: 4px;
+      border-width: 3px;
       border-image-source: url('textures/bakaui/custom_bg_dark.png');
-      border-image-slice: 4 fill;
+      border-image-slice: 3 fill;
       border-image-repeat: stretch;
       opacity: 0.85;
       z-index: 1;
@@ -243,6 +243,7 @@
       position: relative;
       z-index: 2;
       font-family: 'Minecraft', monospace;
+      font-weight: 400;
       font-size: 11px;
       color: #ffffff;
       text-shadow: 1px 1px 0px rgba(0,0,0,0.85);
@@ -400,7 +401,7 @@
       border: 1px solid var(--border-color);
       border-radius: 4px;
       resize: vertical;
-      height: 180px;
+      height: 380px;
       user-select: text;
     }
   </style>
@@ -409,7 +410,7 @@
 
   <!-- Header -->
   <header>
-    <div class="brand">⛏ Bedrock JSON-UI Studio (Adaptive BakaUI)</div>
+    <div class="brand">⛏ Bedrock JSON-UI Studio</div>
     <div class="toolbar-actions">
       <!-- Undo / Redo -->
       <button class="btn" id="btn-undo" onclick="undo()" title="Undo (Ctrl+Z)">↩ Undo</button>
@@ -451,14 +452,12 @@
   <!-- Workspace -->
   <div class="app-container">
 
-    <!-- Left Sidebar: Controls & Adaptive Body Settings -->
+    <!-- Left Sidebar -->
     <div class="sidebar-left">
       <div class="sidebar-section">
         <div class="section-title">Add Elements</div>
         <div class="component-grid">
-          <button class="comp-btn" onclick="addElement('custom_button')">🔘 Square Button</button>
-          <button class="comp-btn" onclick="addElement('custom_button_menu')">🔘 Slim Menu Btn</button>
-          <button class="comp-btn" onclick="addElement('custom_button_shop')">🔘 Shop Card Btn</button>
+          <button class="comp-btn" onclick="addElement('custom_button')">🔘 Custom Button</button>
           <button class="comp-btn" onclick="addElement('image')">🖼 Custom Image</button>
           <button class="comp-btn" onclick="addElement('divider')">➖ Divider Bar</button>
         </div>
@@ -466,7 +465,7 @@
 
       <!-- Adaptive Body & Title Configuration -->
       <div class="sidebar-section">
-        <div class="section-title">Form Body & Background Settings</div>
+        <div class="section-title">Form Body & Title Settings</div>
         <div class="prop-group">
           <label>ActionFormData Title (§)</label>
           <input type="text" id="inp-form-binding" value="§fCustom Shop§r" oninput="updateTitleFilter(this.value)">
@@ -482,7 +481,7 @@
         <div class="prop-row">
           <div class="prop-group">
             <label>Body Height (px)</label>
-            <input type="number" id="inp-body-height" value="28" min="20" max="100" onchange="updateBodyHeight(+this.value)">
+            <input type="number" id="inp-body-height" value="28" min="20" max="120" onchange="updateBodyHeight(+this.value)">
           </div>
           <div class="prop-group">
             <label>Auto-Height</label>
@@ -501,7 +500,6 @@
     <!-- Center Viewport with Background -->
     <div class="viewport" id="viewport">
       <div id="canvas-wrapper" class="grid-on" style="width: 322.5px; height: 200px;">
-        <!-- Fixed BakaUI Chrome Template overlay with Adaptive Body Container -->
         <div class="template-chrome">
           <div class="chrome-label" id="disp-chrome-label">§fCustom Shop§r</div>
           <div class="chrome-divider"></div>
@@ -536,8 +534,8 @@
       </div>
       <div class="modal-body">
         <div class="prop-group">
-          <label class="section-title">Generated Panel Code</label>
-          <textarea class="code-box" id="code-preview" style="height: 360px;" readonly></textarea>
+          <label class="section-title">Complete server_form.json Entry</label>
+          <textarea class="code-box" id="code-preview" readonly></textarea>
         </div>
       </div>
     </div>
@@ -552,12 +550,8 @@
       </div>
       <div class="modal-body">
         <div class="prop-group">
-          <label class="section-title">1. Paste at the bottom of server_form.json (Button Panel & Custom Body Definitions)</label>
-          <textarea class="code-box" id="code-btn-panel" style="height: 200px;" readonly></textarea>
-        </div>
-        <div class="prop-group">
-          <label class="section-title">2. Paste inside long_form.controls in server_form.json (Dialog Panel Entry)</label>
-          <textarea class="code-box" id="code-dialog-panel" style="height: 150px;" readonly></textarea>
+          <label class="section-title">Paste directly inside long_form.controls array in server_form.json</label>
+          <textarea class="code-box" id="code-dialog-panel" readonly></textarea>
         </div>
       </div>
     </div>
@@ -605,12 +599,12 @@
     ];
 
     const TEXTURE_PRESETS = [
-      { name: "Button Light", path: "textures/bakaui/button_light", slice: [4, 4, 4, 4] },
-      { name: "Button Light Hover", path: "textures/bakaui/button_lighthover", slice: [4, 4, 4, 4] },
-      { name: "Button Light Pressed", path: "textures/bakaui/button_lightpressed", slice: [4, 4, 4, 4] },
-      { name: "Custom BG Divider", path: "textures/bakaui/custom_bg_divider", slice: [1, 4, 1, 4] },
-      { name: "Custom BG Dark", path: "textures/bakaui/custom_bg_dark", slice: [4, 4, 4, 4] },
-      { name: "Custom BG Black", path: "textures/bakaui/custom_bg", slice: [4, 4, 4, 4] },
+      { name: "Button Light", path: "textures/bakaui/button_light", slice: [3, 3, 3, 3] },
+      { name: "Button Light Hover", path: "textures/bakaui/button_lighthover", slice: [3, 3, 3, 3] },
+      { name: "Button Light Pressed", path: "textures/bakaui/button_lightpressed", slice: [3, 3, 3, 3] },
+      { name: "Custom BG Divider", path: "textures/bakaui/custom_bg_divider", slice: [3, 3, 3, 3] },
+      { name: "Custom BG Dark", path: "textures/bakaui/custom_bg_dark", slice: [3, 3, 3, 3] },
+      { name: "Custom BG Black", path: "textures/bakaui/custom_bg", slice: [3, 3, 3, 3] },
       { name: "Close Button", path: "textures/bakaui/close_button", slice: [0, 0, 0, 0] }
     ];
 
@@ -745,7 +739,7 @@
 
     function addElement(type) {
       const id = 'el_' + Date.now();
-      const isButton = type.startsWith('custom_button');
+      const isButton = (type === 'custom_button');
       
       let newEl = {
         id,
@@ -753,11 +747,11 @@
         type,
         x: 16,
         y: Math.max(50, bodyHeight + 24),
-        w: type === 'custom_button_menu' ? 127.5 : type === 'custom_button_shop' ? 128 : 64,
-        h: type === 'custom_button_menu' ? 20 : 64,
-        paddingW: type === 'custom_button_menu' ? 137.5 : type === 'custom_button_shop' ? 133 : 69,
-        paddingH: type === 'custom_button_menu' ? 25 : type === 'custom_button_shop' ? 69 : 69,
-        iconSize: type === 'custom_button_menu' ? 16 : 32,
+        w: 64,
+        h: 64,
+        paddingW: 69,
+        paddingH: 69,
+        iconSize: 32,
         layer: isButton ? 4 : type === 'divider' ? 10 : 2,
         alpha: 1.0,
         text: isButton ? `Option ${buttonCount}` : '',
@@ -767,10 +761,10 @@
         mcColorCode: '§f',
         shadow: true,
         texture: isButton ? 'textures/bakaui/button_light' : type === 'divider' ? 'textures/bakaui/custom_bg_divider' : 'textures/bakaui/custom_bg_dark',
-        sliceTop: type === 'divider' ? 1 : 4,
-        sliceRight: 4,
-        sliceBottom: type === 'divider' ? 1 : 4,
-        sliceLeft: 4,
+        sliceTop: 3,
+        sliceRight: 3,
+        sliceBottom: 3,
+        sliceLeft: 3,
         useNineSlice: true,
         iconTexture: 'textures/bakaui/trash',
         collectionIndex: isButton ? buttonCount++ : null,
@@ -813,16 +807,16 @@
         div.style.zIndex = el.layer;
         div.style.color = el.textColor || '#ffffff';
 
-        // 1. Corrected 9-Slice Background Layer (Zero Distortion on Dividers)
+        // 1. Background Layer (3:3 default 9-slice)
         const bgLayer = document.createElement('div');
         bgLayer.className = 'ui-bg-layer';
         bgLayer.style.opacity = el.alpha;
 
         if (el.texture) {
-          const t = el.sliceTop !== undefined ? el.sliceTop : (el.type === 'divider' ? 1 : 4);
-          const r = el.sliceRight !== undefined ? el.sliceRight : 4;
-          const b = el.sliceBottom !== undefined ? el.sliceBottom : (el.type === 'divider' ? 1 : 4);
-          const l = el.sliceLeft !== undefined ? el.sliceLeft : 4;
+          const t = el.sliceTop !== undefined ? el.sliceTop : 3;
+          const r = el.sliceRight !== undefined ? el.sliceRight : 3;
+          const b = el.sliceBottom !== undefined ? el.sliceBottom : 3;
+          const l = el.sliceLeft !== undefined ? el.sliceLeft : 3;
 
           bgLayer.style.borderStyle = 'solid';
           bgLayer.style.borderWidth = `${t}px ${r}px ${b}px ${l}px`;
@@ -839,7 +833,7 @@
         const fontClass = el.fontType === 'MinecraftTen' ? 'mc-font-ten' : 'mc-font-regular';
         const shadowStyle = el.shadow ? 'text-shadow: 1px 1px 0px rgba(0,0,0,0.85);' : '';
 
-        if (el.type.startsWith('custom_button')) {
+        if (el.type === 'custom_button') {
           contentLayer.innerHTML = `
             <div class="btn-container">
               <div class="btn-icon" style="background-image: url('${el.iconTexture || 'textures/bakaui/trash'}.png'); width:${el.iconSize || 32}px; height:${el.iconSize || 32}px;"></div>
@@ -891,6 +885,10 @@
                 el.y = nextY;
                 el.w = nextW;
                 el.h = nextH;
+
+                // Sync padding with dimensions automatically
+                el.paddingW = nextW + 5;
+                el.paddingH = nextH + 5;
 
                 div.style.left = el.x + 'px';
                 div.style.top = el.y + 'px';
@@ -1080,10 +1078,10 @@
       badge.innerText = `${el.type.toUpperCase()}`;
 
       let buttonSpecificHtml = '';
-      if (el.type.startsWith('custom_button')) {
+      if (el.type === 'custom_button') {
         buttonSpecificHtml = `
           <div class="prop-card">
-            <div class="prop-card-title">Button Template Parameters</div>
+            <div class="prop-card-title">Custom Button Parameters</div>
             <div class="prop-group">
               <label>Preview Text</label>
               <input type="text" value="${el.text}" onchange="updateProp('text', this.value)">
@@ -1096,20 +1094,20 @@
             </div>
             <div class="prop-row">
               <div class="prop-group">
-                <label>Padding Width</label>
+                <label>Padding Width ($padding_size)</label>
                 <input type="number" value="${el.paddingW || el.w + 5}" onchange="updateProp('paddingW', +this.value)">
               </div>
               <div class="prop-group">
-                <label>Padding Height</label>
+                <label>Padding Height ($padding_size)</label>
                 <input type="number" value="${el.paddingH || el.h + 5}" onchange="updateProp('paddingH', +this.value)">
               </div>
             </div>
             <div class="prop-group">
-              <label>Icon Size</label>
+              <label>Icon Size ($icon_size)</label>
               <input type="number" value="${el.iconSize || 32}" onchange="updateProp('iconSize', +this.value)">
             </div>
             <div class="prop-group">
-              <label>Button Collection Index</label>
+              <label>Button Collection Index (collection_index)</label>
               <input type="number" value="${el.collectionIndex}" onchange="updateProp('collectionIndex', +this.value)">
             </div>
           </div>
@@ -1126,7 +1124,7 @@
         </div>
 
         <div class="prop-card">
-          <div class="prop-card-title">Transform & Dimensions</div>
+          <div class="prop-card-title">Transform & Dimensions ($button_size)</div>
           <div class="prop-row">
             <div class="prop-group">
               <label>Offset X</label>
@@ -1139,11 +1137,11 @@
           </div>
           <div class="prop-row">
             <div class="prop-group">
-              <label>Width</label>
+              <label>Width ($button_size X)</label>
               <input type="number" id="inp-w" value="${el.w}" onchange="updateProp('w', snap(+this.value))">
             </div>
             <div class="prop-group">
-              <label>Height</label>
+              <label>Height ($button_size Y)</label>
               <input type="number" id="inp-h" value="${el.h}" onchange="updateProp('h', snap(+this.value))">
             </div>
           </div>
@@ -1163,17 +1161,17 @@
             </select>
           </div>
           <div class="prop-group">
-            <label>Custom Texture Path</label>
+            <label>Custom Texture Path ($default_button_texture)</label>
             <input type="text" value="${el.texture}" onchange="updateTexturePreset(this.value)">
           </div>
 
           <div class="prop-group">
             <label>Slice Insets (Top / Right / Bottom / Left)</label>
             <div class="prop-row-4">
-              <input type="number" title="Top" value="${el.sliceTop}" onchange="updateProp('sliceTop', +this.value)">
-              <input type="number" title="Right" value="${el.sliceRight}" onchange="updateProp('sliceRight', +this.value)">
-              <input type="number" title="Bottom" value="${el.sliceBottom}" onchange="updateProp('sliceBottom', +this.value)">
-              <input type="number" title="Left" value="${el.sliceLeft}" onchange="updateProp('sliceLeft', +this.value)">
+              <input type="number" title="Top" value="${el.sliceTop !== undefined ? el.sliceTop : 3}" onchange="updateProp('sliceTop', +this.value)">
+              <input type="number" title="Right" value="${el.sliceRight !== undefined ? el.sliceRight : 3}" onchange="updateProp('sliceRight', +this.value)">
+              <input type="number" title="Bottom" value="${el.sliceBottom !== undefined ? el.sliceBottom : 3}" onchange="updateProp('sliceBottom', +this.value)">
+              <input type="number" title="Left" value="${el.sliceLeft !== undefined ? el.sliceLeft : 3}" onchange="updateProp('sliceLeft', +this.value)">
             </div>
           </div>
 
@@ -1216,7 +1214,11 @@
       if (selectedIds.length === 0) return;
       selectedIds.forEach(id => {
         const el = elements.find(e => e.id === id);
-        if (el) el[prop] = val;
+        if (el) {
+          el[prop] = val;
+          if (prop === 'w') el.paddingW = val + 5;
+          if (prop === 'h') el.paddingH = val + 5;
+        }
       });
       recordState();
       renderAll();
@@ -1244,85 +1246,9 @@
       updateInspector();
     }
 
-    // Generates the customized Adaptive Body & Button Panel controls
-    function generateButtonPanelJson() {
-      const panelName = `my_custom_panel_${menuName}`;
-      const customBodyName = `my_form_body_${menuName}`;
-
-      return {
-        [customBodyName]: {
-          "type": "panel",
-          "anchor_from": "top_middle",
-          "size": ["100%", bodyHeight],
-          "layer": 8,
-          "controls": [
-            {
-              "form_body_text": {
-                "type": "label",
-                "text": "#form_text",
-                "layer": 8,
-                "bindings": [
-                  {
-                    "binding_name": "#form_text"
-                  }
-                ]
-              }
-            },
-            {
-              "my_form_background@server_form.my_form_background_dark": {
-                "size": ["100% - 22px", "100%"]
-              }
-            }
-          ]
-        },
-        [panelName]: {
-          "type": "panel",
-          "size": ["100%", "100%"],
-          "collection_name": "form_buttons",
-          "controls": elements.map((el, i) => {
-            if (el.type.startsWith('custom_button')) {
-              const templateRef = el.type === 'custom_button_menu' 
-                ? 'server_form.custom_button_menu' 
-                : el.type === 'custom_button_shop' 
-                ? 'server_form.custom_button_shop' 
-                : 'server_form.custom_button';
-
-              return {
-                [`${el.name}@${templateRef}`]: {
-                  "offset": [el.x, el.y],
-                  "$button_size": [el.w, el.h],
-                  "$padding_size": [el.paddingW || (el.w + 5), el.paddingH || (el.h + 5)],
-                  "$icon_size": [el.iconSize || 32, el.iconSize || 32],
-                  ...(el.texture ? { "$default_button_texture": el.texture } : {}),
-                  "collection_index": el.collectionIndex,
-                  "anchor_from": "top_left",
-                  "anchor_to": "top_left"
-                }
-              };
-            }
-            // Valid Image output for dividers and custom textures
-            return {
-              [`${el.name}`]: {
-                "type": "image",
-                "size": [el.w, el.h],
-                "offset": [el.x, el.y],
-                "layer": el.layer,
-                ...(el.alpha !== 1.0 ? { "alpha": el.alpha } : {}),
-                "texture": el.texture || "textures/bakaui/custom_bg_dark",
-                "anchor_from": "top_left",
-                "anchor_to": "top_left"
-              }
-            };
-          })
-        }
-      };
-    }
-
-    // Generates the dialog entry for long_form.controls
-    function generateDialogEntryJson() {
+    // Generates the single complete self-contained dialog entry using ONLY custom_button
+    function generateCompleteDialogJson() {
       const dialogId = `bakaui_${menuName}`;
-      const btnPanelRef = `server_form.my_custom_panel_${menuName}`;
-      const customBodyRef = `server_form.my_form_body_${menuName}`;
       const cw = parseFloat(canvas.style.width) || 322.5;
       const ch = parseFloat(canvas.style.height) || 200;
 
@@ -1371,10 +1297,66 @@
                           }
                         },
                         {
-                          [`my_form_body@${customBodyRef}`]: {}
+                          "my_form_body": {
+                            "type": "panel",
+                            "anchor_from": "top_middle",
+                            "size": ["100%", bodyHeight],
+                            "layer": 8,
+                            "controls": [
+                              {
+                                "form_body_text": {
+                                  "type": "label",
+                                  "text": "#form_text",
+                                  "layer": 8,
+                                  "bindings": [
+                                    {
+                                      "binding_name": "#form_text"
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "my_form_background@server_form.my_form_background_dark": {
+                                  "size": ["100% - 22px", "100%"]
+                                }
+                              }
+                            ]
+                          }
                         },
                         {
-                          [`button_panel@${btnPanelRef}`]: {}
+                          "button_panel": {
+                            "type": "panel",
+                            "size": ["100%", "100%"],
+                            "collection_name": "form_buttons",
+                            "controls": elements.map((el, i) => {
+                              if (el.type === 'custom_button') {
+                                return {
+                                  [`${el.name}@server_form.custom_button`]: {
+                                    "offset": [el.x, el.y],
+                                    "$button_size": [el.w, el.h],
+                                    "$padding_size": [el.paddingW || (el.w + 5), el.paddingH || (el.h + 5)],
+                                    "$icon_size": [el.iconSize || 32, el.iconSize || 32],
+                                    ...(el.texture ? { "$default_button_texture": el.texture } : {}),
+                                    "collection_index": el.collectionIndex,
+                                    "anchor_from": "top_left",
+                                    "anchor_to": "top_left"
+                                  }
+                                };
+                              }
+                              return {
+                                [`${el.name}`]: {
+                                  "type": "image",
+                                  "size": [el.w, el.h],
+                                  "offset": [el.x, el.y],
+                                  "layer": el.layer,
+                                  ...(el.alpha !== 1.0 ? { "alpha": el.alpha } : {}),
+                                  "texture": el.texture || "textures/bakaui/custom_bg_dark",
+                                  "anchor_from": "top_left",
+                                  "anchor_to": "top_left"
+                                }
+                              };
+                            })
+                          }
                         }
                       ]
                     }
@@ -1398,11 +1380,8 @@
     }
 
     function openPreviewModal() {
-      const fullPreview = {
-        ...generateDialogEntryJson(),
-        ...generateButtonPanelJson()
-      };
-      document.getElementById('code-preview').value = JSON.stringify(fullPreview, null, 2);
+      const fullJson = generateCompleteDialogJson();
+      document.getElementById('code-preview').value = JSON.stringify(fullJson, null, 2);
       document.getElementById('preview-modal').style.display = 'flex';
     }
 
@@ -1411,10 +1390,7 @@
     }
 
     function openExportModal() {
-      const btnPanel = generateButtonPanelJson();
-      const dialogEntry = generateDialogEntryJson();
-
-      document.getElementById('code-btn-panel').value = JSON.stringify(btnPanel, null, 2);
+      const dialogEntry = generateCompleteDialogJson();
       document.getElementById('code-dialog-panel').value = JSON.stringify(dialogEntry, null, 2);
       document.getElementById('export-modal').style.display = 'flex';
     }
