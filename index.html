@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft Bedrock JSON-UI Studio (Centered Stack Panel Engine)</title>
+  <title>Minecraft Bedrock JSON-UI Studio (Nested Container Engine)</title>
   <link href="https://fonts.cdnfonts.com/css/minecraft-4" rel="stylesheet">
   <style>
     :root {
@@ -26,7 +26,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; user-select: none; }
     body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-    /* Top Toolbar */
+    /* Header */
     header {
       background-color: var(--bg-panel);
       border-bottom: 1px solid var(--border-color);
@@ -164,7 +164,7 @@
       image-rendering: pixelated;
     }
 
-    /* Subtle Grid Overlay */
+    /* Subtle Grid */
     #canvas-wrapper.grid-on {
       background-image: 
         linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
@@ -235,7 +235,7 @@
       image-rendering: pixelated;
     }
     
-    /* Centered Body with Normal Font */
+    /* Form Body Container */
     .chrome-body-container {
       position: absolute;
       top: 8px;
@@ -265,7 +265,7 @@
       position: relative;
       z-index: 2;
       font-family: 'Minecraft', monospace;
-      font-weight: 400; /* Regular normal font */
+      font-weight: 400;
       font-size: 11px;
       color: #ffffff;
       text-align: center;
@@ -445,7 +445,7 @@
 
   <!-- Header -->
   <header>
-    <div class="brand">⛏ Bedrock JSON-UI Studio (Centered Stacks)</div>
+    <div class="brand">⛏ Bedrock JSON-UI Studio (Nested Container Engine)</div>
     <div class="toolbar-actions">
       <!-- Undo / Redo -->
       <button class="btn" id="btn-undo" onclick="undo()" title="Undo (Ctrl+Z)">↩ Undo</button>
@@ -721,6 +721,7 @@
       document.getElementById('btn-redo').disabled = (historyIndex >= historyStack.length - 1);
     }
 
+    // Keyboard Shortcuts
     window.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
@@ -997,10 +998,6 @@
                 el.w = nextW;
                 el.h = nextH;
 
-                // Sync padding with dimensions automatically
-                el.paddingW = nextW + 5;
-                el.paddingH = nextH + 5;
-
                 div.style.left = el.x + 'px';
                 div.style.top = el.y + 'px';
                 div.style.width = el.w + 'px';
@@ -1203,16 +1200,6 @@
                 ${MC_COLORS.map(c => `<option value="${c.hex}" ${el.textColor.toLowerCase() === c.hex.toLowerCase() ? 'selected' : ''} style="color:${c.hex}; background:#1a1e26; font-weight:bold;">${c.name}</option>`).join('')}
               </select>
             </div>
-            <div class="prop-row">
-              <div class="prop-group">
-                <label>Padding Width ($padding_size)</label>
-                <input type="number" value="${el.paddingW || el.w + 5}" onchange="updateProp('paddingW', +this.value)">
-              </div>
-              <div class="prop-group">
-                <label>Padding Height ($padding_size)</label>
-                <input type="number" value="${el.paddingH || el.h + 5}" onchange="updateProp('paddingH', +this.value)">
-              </div>
-            </div>
             <div class="prop-group">
               <label>Icon Size ($icon_size)</label>
               <input type="number" value="${el.iconSize || 32}" onchange="updateProp('iconSize', +this.value)">
@@ -1235,7 +1222,7 @@
         </div>
 
         <div class="prop-card">
-          <div class="prop-card-title">Transform & Dimensions ($button_size)</div>
+          <div class="prop-card-title">Dimensions ($button_size)</div>
           <div class="prop-row">
             <div class="prop-group">
               <label>Offset X</label>
@@ -1326,11 +1313,7 @@
       if (selectedIds.length === 0) return;
       selectedIds.forEach(id => {
         const el = elements.find(e => e.id === id);
-        if (el) {
-          el[prop] = val;
-          if (prop === 'w') el.paddingW = val + 5;
-          if (prop === 'h') el.paddingH = val + 5;
-        }
+        if (el) el[prop] = val;
       });
       recordState();
       renderAll();
@@ -1358,14 +1341,14 @@
       updateInspector();
     }
 
-    // Centered Stack Panel Exporter: Uses 100%c sizes and precise button/padding mappings
+    // Centered Nested Container Exporter (With precise uniform padding & 100%c auto-centering)
     function generateButtonPanelJson() {
       const panelName = `my_custom_panel_${menuName}`;
 
-      // 1. Sort elements by Y coordinate, then X
+      // 1. Sort elements top-to-bottom, left-to-right
       const sorted = [...elements].sort((a, b) => a.y - b.y || a.x - b.x);
 
-      // 2. Cluster into distinct horizontal row tiers
+      // 2. Group into distinct row tiers
       const rows = [];
       sorted.forEach(el => {
         let placed = false;
@@ -1380,14 +1363,16 @@
         if (!placed) rows.push([el]);
       });
 
-      // 3. Construct centered rows
+      // 3. Build uniform nested row stacks
       const rowControls = rows.map((rowItems, rowIndex) => {
         rowItems.sort((a, b) => a.x - b.x);
 
-        const itemsControls = rowItems.map(el => {
+        const itemsControls = rowItems.map((el, i) => {
           if (el.type === 'custom_button') {
-            const padW = el.paddingW !== undefined ? el.paddingW : (el.w + 5);
-            const padH = el.paddingH !== undefined ? el.paddingH : (el.h + 5);
+            // Precise uniform 5px cell padding on each button
+            const padW = el.w + 5;
+            const padH = el.h + 5;
+
             return {
               [`${el.name}@server_form.custom_button`]: {
                 "$button_size": [el.w, el.h],
@@ -1441,7 +1426,7 @@
       };
     }
 
-    // Dialog Definition inside long_form.controls
+    // Dialog Entry for long_form.controls
     function generateDialogEntryJson() {
       const dialogId = `bakaui_${menuName}`;
       const btnPanelRef = `server_form.my_custom_panel_${menuName}`;
