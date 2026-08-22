@@ -146,20 +146,22 @@
       justify-content: center;
       overflow: hidden;
       touch-action: none;
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
     }
     .ui-element.selected {
       outline: 2px solid var(--mc-aqua) !important;
       outline-offset: 1px;
     }
 
-    /* Element Specific Previews */
-    .ui-type-panel { background: rgba(30, 41, 59, 0.85); border: 2px solid #64748b; border-radius: 4px; }
-    .ui-type-image { background: rgba(51, 65, 85, 0.5); border: 1px dashed #64748b; }
-    .ui-type-title { background: #1e293b; color: #fff; font-weight: bold; border-bottom: 2px solid var(--accent); }
-    .ui-type-body { background: rgba(15, 23, 42, 0.7); color: #cbd5e1; font-size: 12px; padding: 6px; }
-    .ui-type-close { background: #e11d48; color: #fff; font-weight: bold; font-size: 11px; border-radius: 2px; }
+    /* Element Styling */
+    .ui-type-panel { background-color: rgba(30, 41, 59, 0.85); border: 2px solid #64748b; border-radius: 4px; }
+    .ui-type-image { background-color: rgba(51, 65, 85, 0.5); border: 1px dashed #64748b; }
+    .ui-type-title { background-color: #1e293b; color: #fff; font-weight: bold; border-bottom: 2px solid var(--accent); }
+    .ui-type-body { background-color: rgba(15, 23, 42, 0.7); color: #cbd5e1; font-size: 12px; padding: 6px; }
+    .ui-type-close { background-color: #e11d48; color: #fff; font-weight: bold; font-size: 11px; border-radius: 2px; }
     .ui-type-button {
-      background: #334155;
+      background-color: #334155;
       border: 2px solid #475569;
       border-radius: 4px;
       display: flex;
@@ -169,10 +171,10 @@
       gap: 4px;
       padding: 4px;
     }
-    .ui-type-button .btn-icon { width: 32px; height: 32px; background: #1e293b; border: 1px dashed #64748b; border-radius: 2px; }
+    .ui-type-button .btn-icon { width: 32px; height: 32px; background: rgba(0,0,0,0.3); border: 1px dashed #64748b; border-radius: 2px; }
     .ui-type-button .btn-label { font-size: 11px; text-align: center; }
 
-    /* Right Sidebar: Properties & Texture Selector */
+    /* Right Sidebar: Properties */
     .sidebar-right {
       width: 320px;
       background-color: var(--bg-panel);
@@ -284,7 +286,7 @@
 
     <!-- Center Canvas Viewport -->
     <div class="viewport" id="viewport">
-      <div id="canvas-wrapper" style="width: 432px; height: 243px;"></div>
+      <div id="canvas-wrapper" style="width: 350px; height: 200px;"></div>
     </div>
 
     <!-- Right Sidebar: Properties & Texture Selector -->
@@ -313,7 +315,7 @@
           <textarea class="code-box" id="code-namespace" readonly></textarea>
         </div>
         <div class="prop-group">
-          <label class="section-title">2. server_form.json (Insert inside controls array)</label>
+          <label class="section-title">2. server_form.json (Insert inside long_form.controls array)</label>
           <textarea class="code-box" id="code-server-form" style="height: 110px;" readonly></textarea>
         </div>
       </div>
@@ -332,16 +334,16 @@
     let namespace = "custom_shop";
     let buttonCount = 0;
 
+    // Filtered strictly to textures found in your server_form.json
     const TEXTURE_PRESETS = [
-      { name: "Default Turquoise BG", path: "textures/assets/turquoise_default_background" },
-      { name: "Default Turquoise Button", path: "textures/assets/turquoise_default_button" },
-      { name: "Turquoise Button Hover", path: "textures/assets/turquoise_hover_button" },
-      { name: "Turquoise Title BG", path: "textures/assets/turquoise_default_title_background" },
-      { name: "BakaUI Light Button", path: "textures/bakaui/button_light" },
-      { name: "BakaUI Dark BG", path: "textures/bakaui/custom_bg_dark" },
-      { name: "BakaUI Close Button", path: "textures/bakaui/close_button" },
-      { name: "Vanilla Button Black Hover", path: "textures/ui/button_black_hover" },
-      { name: "Vanilla Glass Pane", path: "textures/ui/glass_pane" }
+      { name: "Button Light", path: "textures/bakaui/button_light" },
+      { name: "Button Light Hover", path: "textures/bakaui/button_lighthover" },
+      { name: "Button Light Pressed", path: "textures/bakaui/button_lightpressed" },
+      { name: "Custom BG Divider", path: "textures/bakaui/custom_bg_divider" },
+      { name: "Custom BG Dark", path: "textures/bakaui/custom_bg_dark" },
+      { name: "Custom BG Black", path: "textures/bakaui/custom_bg" },
+      { name: "Close Button", path: "textures/bakaui/close_button" },
+      { name: "Close Button Hover", path: "textures/bakaui/close_button_hover" }
     ];
 
     function setPreset(w, h) {
@@ -367,23 +369,22 @@
         fontSize: 1.0,
         shadow: false,
         textAlignment: 'center',
-        texture: type === 'button' ? 'textures/assets/turquoise_default_button' : 'textures/assets/turquoise_default_background',
+        texture: type === 'button' ? 'textures/bakaui/button_light' : type === 'close' ? 'textures/bakaui/close_button' : 'textures/bakaui/custom_bg_dark',
         collectionIndex: type === 'button' ? buttonCount++ : null,
         visible: true
       };
 
-      if (type === 'panel') { newEl.w = 390; newEl.h = 200; newEl.x = 20; newEl.y = 20; }
-      if (type === 'title') { newEl.w = 390; newEl.h = 32; newEl.x = 20; newEl.y = 20; newEl.fontSize = 1.5; }
-      if (type === 'close') { newEl.w = 16; newEl.h = 16; newEl.x = 390; newEl.y = 26; newEl.text = 'X'; newEl.layer = 10; }
-      if (type === 'body') { newEl.w = 350; newEl.h = 24; newEl.x = 40; newEl.y = 60; newEl.textAlignment = 'left'; }
-      if (type === 'button') { newEl.w = 80; newEl.h = 95; newEl.x = 30 + (newEl.collectionIndex * 90); newEl.y = 95; }
+      if (type === 'panel') { newEl.w = 320; newEl.h = 180; newEl.x = 15; newEl.y = 10; }
+      if (type === 'title') { newEl.w = 320; newEl.h = 24; newEl.x = 15; newEl.y = 10; newEl.fontSize = 1.2; }
+      if (type === 'close') { newEl.w = 14; newEl.h = 14; newEl.x = 315; newEl.y = 15; newEl.text = 'X'; newEl.layer = 64; }
+      if (type === 'body') { newEl.w = 290; newEl.h = 24; newEl.x = 30; newEl.y = 40; newEl.textAlignment = 'left'; }
+      if (type === 'button') { newEl.w = 64; newEl.h = 64; newEl.x = 30 + (newEl.collectionIndex * 75); newEl.y = 75; }
 
       elements.push(newEl);
       renderAll();
       selectElement(id);
     }
 
-    // Canvas Renderer with Native Pointer Lock Tracking
     function renderCanvas() {
       canvas.innerHTML = '';
       elements.forEach(el => {
@@ -399,6 +400,10 @@
         div.style.opacity = el.alpha;
         div.style.zIndex = el.layer;
 
+        if (el.texture) {
+          div.style.backgroundImage = `url('${el.texture}.png')`;
+        }
+
         if (el.type === 'button') {
           div.innerHTML = `<div class="btn-icon"></div><div class="btn-label">${el.text} (#${el.collectionIndex})</div>`;
         } else {
@@ -406,15 +411,11 @@
           div.style.textAlign = el.textAlignment;
         }
 
-        // Pointer-Based Instant-Follow Dragging
         div.onpointerdown = (e) => {
           e.stopPropagation();
           div.setPointerCapture(e.pointerId);
-
-          // Update active selection without rebuilding canvas DOM
           setActiveSelection(el.id);
 
-          const canvasRect = canvas.getBoundingClientRect();
           const startMouseX = e.clientX;
           const startMouseY = e.clientY;
           const startElemX = el.x;
@@ -424,12 +425,8 @@
             const deltaX = moveEvent.clientX - startMouseX;
             const deltaY = moveEvent.clientY - startMouseY;
 
-            let nextX = startElemX + deltaX;
-            let nextY = startElemY + deltaY;
-
-            // Constrain within canvas boundaries
-            nextX = Math.max(0, Math.min(canvas.clientWidth - el.w, nextX));
-            nextY = Math.max(0, Math.min(canvas.clientHeight - el.h, nextY));
+            let nextX = Math.max(0, Math.min(canvas.clientWidth - el.w, startElemX + deltaX));
+            let nextY = Math.max(0, Math.min(canvas.clientHeight - el.h, startElemY + deltaY));
 
             el.x = Math.round(nextX);
             el.y = Math.round(nextY);
@@ -492,7 +489,6 @@
       renderTree();
     }
 
-    // Set selection without wiping canvas DOM during active drag
     function setActiveSelection(id) {
       selectedId = id;
       document.querySelectorAll('.ui-element').forEach(node => {
@@ -560,9 +556,9 @@
         <div class="prop-card">
           <div class="prop-card-title">Texture</div>
           <div class="prop-group">
-            <label>Texture Preset</label>
+            <label>BakaUI Preset</label>
             <select onchange="updateProp('texture', this.value)">
-              <option value="">-- Choose Preset --</option>
+              <option value="">-- Choose Texture --</option>
               ${TEXTURE_PRESETS.map(tp => `<option value="${tp.path}" ${el.texture === tp.path ? 'selected' : ''}>${tp.name}</option>`).join('')}
             </select>
           </div>
