@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft Bedrock JSON-UI Studio</title>
+  <title>Minecraft Bedrock JSON-UI Studio (Calibrated Stack Engine)</title>
   <link href="https://fonts.cdnfonts.com/css/minecraft-4" rel="stylesheet">
   <style>
     :root {
@@ -26,7 +26,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; user-select: none; }
     body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-    /* Top Toolbar */
+    /* Header */
     header {
       background-color: var(--bg-panel);
       border-bottom: 1px solid var(--border-color);
@@ -164,7 +164,7 @@
       image-rendering: pixelated;
     }
 
-    /* Subtle Grid Overlay */
+    /* Subtle Grid */
     #canvas-wrapper.grid-on {
       background-image: 
         linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
@@ -442,7 +442,7 @@
 
   <!-- Header -->
   <header>
-    <div class="brand">⛏ Bedrock JSON-UI Studio (Precision Stack Engine)</div>
+    <div class="brand">⛏ Bedrock JSON-UI Studio (Calibrated Engine)</div>
     <div class="toolbar-actions">
       <!-- Undo / Redo -->
       <button class="btn" id="btn-undo" onclick="undo()" title="Undo (Ctrl+Z)">↩ Undo</button>
@@ -505,17 +505,6 @@
         <div class="prop-group">
           <label>Menu Identifier Name</label>
           <input type="text" id="inp-menu-name" value="custom_shop" oninput="updateMenuName(this.value)">
-        </div>
-
-        <div class="prop-row">
-          <div class="prop-group">
-            <label>Left Edge Pad (px)</label>
-            <input type="number" id="inp-left-pad" value="10" min="0" max="40" onchange="updateLeftPad(+this.value)">
-          </div>
-          <div class="prop-group">
-            <label>Button Gap (px)</label>
-            <input type="number" id="inp-btn-gap" value="5" min="0" max="30" onchange="updateBtnGap(+this.value)">
-          </div>
         </div>
 
         <div class="toggle-row" style="margin-top: 4px;">
@@ -596,7 +585,7 @@
       </div>
       <div class="modal-body">
         <div class="prop-group">
-          <label class="section-title">1. Compensated Stack Button Panel (Place at bottom of server_form.json)</label>
+          <label class="section-title">1. Calibrated Button Panel (Place at bottom of server_form.json)</label>
           <textarea class="code-box" id="code-btn-preview" readonly></textarea>
         </div>
         <div class="prop-group">
@@ -640,8 +629,6 @@
     let enableBody = true;
     let bodyText = "Choose an item from the list below:";
     let bodyHeight = 28;
-    let leftEdgePad = 10;
-    let buttonGap = 5;
     let buttonCount = 0;
 
     let zoomScale = 1.5;
@@ -683,7 +670,7 @@
     ];
 
     function recordState() {
-      const state = JSON.stringify({ elements, enableBody, bodyHeight, bodyText, titleFilter, menuName, leftEdgePad, buttonGap });
+      const state = JSON.stringify({ elements, enableBody, bodyHeight, bodyText, titleFilter, menuName });
       if (historyIndex >= 0 && historyStack[historyIndex] === state) return;
       historyStack = historyStack.slice(0, historyIndex + 1);
       historyStack.push(state);
@@ -702,8 +689,6 @@
         bodyText = data.bodyText || "";
         titleFilter = data.titleFilter || "§fCustom Shop§r";
         menuName = data.menuName || "custom_shop";
-        leftEdgePad = data.leftEdgePad !== undefined ? data.leftEdgePad : 10;
-        buttonGap = data.buttonGap !== undefined ? data.buttonGap : 5;
         applyChromeSettings();
         renderAll();
         updateInspector();
@@ -721,8 +706,6 @@
         bodyText = data.bodyText || "";
         titleFilter = data.titleFilter || "§fCustom Shop§r";
         menuName = data.menuName || "custom_shop";
-        leftEdgePad = data.leftEdgePad !== undefined ? data.leftEdgePad : 10;
-        buttonGap = data.buttonGap !== undefined ? data.buttonGap : 5;
         applyChromeSettings();
         renderAll();
         updateInspector();
@@ -824,16 +807,6 @@
       recordState();
     }
 
-    function updateLeftPad(val) {
-      leftEdgePad = Math.max(0, Math.min(50, val));
-      recordState();
-    }
-
-    function updateBtnGap(val) {
-      buttonGap = Math.max(0, Math.min(30, val));
-      recordState();
-    }
-
     function toggleBody(enabled) {
       enableBody = enabled;
       applyChromeSettings();
@@ -869,8 +842,6 @@
 
       document.getElementById('inp-form-binding').value = titleFilter;
       document.getElementById('inp-menu-name').value = menuName;
-      document.getElementById('inp-left-pad').value = leftEdgePad;
-      document.getElementById('inp-btn-gap').value = buttonGap;
       document.getElementById('inp-body-text').value = bodyText;
       document.getElementById('inp-body-height').value = bodyHeight;
     }
@@ -904,7 +875,9 @@
         useNineSlice: true,
         iconTexture: 'textures/bakaui/trash',
         collectionIndex: isButton ? buttonCount++ : null,
-        visible: true
+        visible: true,
+        customPadW: null,
+        customPadH: null
       };
 
       if (type === 'divider') {
@@ -1233,6 +1206,17 @@
               <label>Button Collection Index (collection_index)</label>
               <input type="number" value="${el.collectionIndex}" onchange="updateProp('collectionIndex', +this.value)">
             </div>
+            <div class="prop-card-title" style="margin-top:4px;">Direct Padding Override (Optional)</div>
+            <div class="prop-row">
+              <div class="prop-group">
+                <label>Padding Width</label>
+                <input type="number" placeholder="Auto" value="${el.customPadW !== null ? el.customPadW : ''}" onchange="updateProp('customPadW', this.value === '' ? null : +this.value)">
+              </div>
+              <div class="prop-group">
+                <label>Padding Height</label>
+                <input type="number" placeholder="Auto" value="${el.customPadH !== null ? el.customPadH : ''}" onchange="updateProp('customPadH', this.value === '' ? null : +this.value)">
+              </div>
+            </div>
           </div>
         `;
       }
@@ -1247,7 +1231,7 @@
         </div>
 
         <div class="prop-card">
-          <div class="prop-card-title">Dimensions ($button_size)</div>
+          <div class="prop-card-title">Transform & Dimensions ($button_size)</div>
           <div class="prop-row">
             <div class="prop-group">
               <label>Offset X</label>
@@ -1366,11 +1350,11 @@
       updateInspector();
     }
 
-    // Precise Compensated Stack Panel Generator adhering to the exact padding rules
+    // Calibrated Stack Panel Generator adhering strictly to row widths & vertical offset rules
     function generateButtonPanelJson() {
       const panelName = `my_custom_panel_${menuName}`;
 
-      // 1. Sort top-to-bottom, left-to-right
+      // 1. Sort elements top-to-bottom, left-to-right
       const sorted = [...elements].sort((a, b) => a.y - b.y || a.x - b.x);
 
       // 2. Cluster into distinct rows
@@ -1388,30 +1372,35 @@
         if (!placed) rows.push([el]);
       });
 
-      // Track accumulated row widths for second/subsequent row padding offsets
-      let prevRowTotalWidth = 0;
+      // Target dialog content width (inside indent_panel: 322.5 - 16 = 306.5 approx ~312px)
+      const targetContentWidth = (parseFloat(canvas.style.width) || 322.5) - 10;
+      let prevRowCalculatedPadding = [];
 
       const rowControls = rows.map((rowItems, rowIndex) => {
         rowItems.sort((a, b) => a.x - b.x);
 
-        let currentRowWidth = 0;
+        const rowButtonCount = rowItems.filter(e => e.type === 'custom_button').length;
+        const totalButtonWidth = rowItems.reduce((sum, e) => sum + e.w, 0);
+
+        // Distribute spacing across row items so total row padding fills content area perfectly
+        const remainingSpace = Math.max(0, targetContentWidth - totalButtonWidth);
+        const autoPadPerButton = rowButtonCount > 0 ? (remainingSpace / rowButtonCount) : 5;
+
+        const currentPaddings = [];
 
         const itemsControls = rowItems.map((el, i) => {
           if (el.type === 'custom_button') {
-            let padW = el.w + buttonGap;
-            let padH = el.h + buttonGap;
+            // Check for direct manual overrides or calculate calibrated stack values
+            let padW = el.customPadW !== null ? el.customPadW : Math.round(el.w + autoPadPerButton);
+            let padH = el.customPadH !== null ? el.customPadH : Math.round(el.h + 5);
 
-            // Rule 1: Leftmost button on the row gets +10 padding to align with body
-            if (i === 0) {
-              padW += leftEdgePad;
+            // Calibrate multi-row negative Y padding compensation if not manually set
+            if (rowIndex > 0 && i === 0 && el.customPadH === null && prevRowCalculatedPadding.length > 0) {
+              const prevTotalRowHeightPad = prevRowCalculatedPadding.reduce((sum, p) => sum + p.h, 0);
+              padH = -Math.abs(prevTotalRowHeightPad);
             }
 
-            // Rule 2: Multi-row stacking compensation offset
-            if (rowIndex > 0 && i === 0 && prevRowTotalWidth > 0) {
-              padW -= prevRowTotalWidth;
-            }
-
-            currentRowWidth += (el.w + buttonGap);
+            currentPaddings.push({ w: padW, h: (el.h + 5) });
 
             return {
               [`${el.name}@server_form.custom_button`]: {
@@ -1424,8 +1413,6 @@
             };
           }
 
-          currentRowWidth += (el.w + buttonGap);
-
           return {
             [`${el.name}`]: {
               "type": "image",
@@ -1437,7 +1424,7 @@
           };
         });
 
-        prevRowTotalWidth = currentRowWidth;
+        prevRowCalculatedPadding = currentPaddings;
 
         if (rows.length === 1) {
           return itemsControls;
@@ -1446,10 +1433,10 @@
         return {
           [`row_stack_${rowIndex}`]: {
             "type": "stack_panel",
-            "size": ["100%c", "100%c"],
+            "size": rowIndex === 0 ? ["100%", "100%c"] : ["100%c", "100%c"],
             "orientation": "horizontal",
-            "anchor_from": "top_left",
-            "anchor_to": "top_left",
+            "anchor_from": "center",
+            "anchor_to": "center",
             "collection_name": "form_buttons",
             "controls": itemsControls
           }
@@ -1462,10 +1449,9 @@
         [panelName]: {
           "type": "stack_panel",
           "size": ["100%", "100%c"],
-          "orientation": rows.length === 1 ? "horizontal" : "vertical",
-          "anchor_from": "top_left",
-          "anchor_to": "top_left",
-          "collection_name": "form_buttons",
+          "orientation": "vertical",
+          "anchor_from": "center",
+          "anchor_to": "center",
           "controls": finalControls
         }
       };
