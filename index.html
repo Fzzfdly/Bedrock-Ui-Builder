@@ -3,41 +3,42 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft Bedrock JSON-UI Form Builder</title>
+  <title>Minecraft Bedrock JSON-UI Visual Builder</title>
   <style>
     :root {
-      --bg-dark: #121417;
-      --bg-panel: #1b1e23;
-      --bg-input: #242930;
-      --border-color: #333a44;
+      --bg-dark: #0f1115;
+      --bg-panel: #181b20;
+      --bg-card: #21252d;
+      --bg-input: #2a303c;
+      --border-color: #384152;
       --accent: #00d26a;
       --accent-hover: #00b359;
-      --text-main: #f0f3f6;
-      --text-muted: #8c9ba5;
       --mc-gold: #ffaa00;
-      --mc-blue: #55ffff;
+      --mc-aqua: #55ffff;
+      --mc-red: #ff5555;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; user-select: none; }
     body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-    /* Header / Toolbar */
+    /* Top Toolbar */
     header {
       background-color: var(--bg-panel);
       border-bottom: 1px solid var(--border-color);
-      height: 52px;
+      height: 50px;
       padding: 0 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       z-index: 100;
     }
-
-    .brand { font-size: 16px; font-weight: 700; color: var(--mc-gold); display: flex; align-items: center; gap: 8px; }
+    .brand { font-size: 15px; font-weight: 700; color: var(--mc-gold); display: flex; align-items: center; gap: 8px; }
     .toolbar-actions { display: flex; gap: 8px; align-items: center; }
 
     button.btn {
-      background-color: var(--bg-input);
+      background-color: var(--bg-card);
       color: var(--text-main);
       border: 1px solid var(--border-color);
       padding: 6px 12px;
@@ -53,43 +54,72 @@
     button.btn:hover { background-color: var(--border-color); }
     button.btn-primary { background-color: var(--accent); color: #000; border-color: var(--accent); }
     button.btn-primary:hover { background-color: var(--accent-hover); }
+    button.btn-danger { background-color: rgba(239, 68, 68, 0.2); border-color: var(--mc-red); color: var(--mc-red); }
+    button.btn-danger:hover { background-color: var(--mc-red); color: #fff; }
 
-    /* App Layout */
-    .app-container { display: flex; flex: 1; height: calc(100vh - 52px); overflow: hidden; }
+    /* Main Workspace Layout */
+    .app-container { display: flex; flex: 1; height: calc(100vh - 50px); overflow: hidden; }
 
-    /* Left Sidebar: Components */
+    /* Left Sidebar: Components & File Explorer */
     .sidebar-left {
-      width: 220px;
+      width: 260px;
       background-color: var(--bg-panel);
       border-right: 1px solid var(--border-color);
       display: flex;
       flex-direction: column;
-      padding: 12px;
-      gap: 12px;
+      overflow: hidden;
     }
+    .sidebar-section { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
     .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); font-weight: 700; }
-    .component-list { display: flex; flex-direction: column; gap: 6px; }
+    
+    .component-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     .comp-btn {
-      background-color: var(--bg-input);
+      background-color: var(--bg-card);
       border: 1px solid var(--border-color);
       color: var(--text-main);
-      padding: 8px 10px;
+      padding: 8px;
       border-radius: 4px;
-      text-align: left;
-      font-size: 13px;
+      font-size: 11px;
+      font-weight: 600;
       cursor: pointer;
+      text-align: center;
+      transition: 0.15s;
+    }
+    .comp-btn:hover { border-color: var(--accent); background: var(--bg-input); }
+
+    /* File/Element Hierarchy Manager */
+    .tree-view {
+      flex: 1;
+      overflow-y: auto;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      padding: 8px;
+      gap: 4px;
+    }
+    .tree-item {
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: space-between;
+      padding: 6px 10px;
+      background: var(--bg-card);
+      border: 1px solid transparent;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
     }
-    .comp-btn:hover { border-color: var(--accent); }
+    .tree-item:hover { border-color: var(--border-color); }
+    .tree-item.selected { border-color: var(--mc-aqua); background: #1e2838; }
+    .tree-item-actions { display: flex; gap: 4px; }
+    .tree-action-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px 4px; font-size: 12px; border-radius: 2px; }
+    .tree-action-btn:hover { color: var(--text-main); background: var(--bg-input); }
 
-    /* Center: Viewport */
+    /* Center Viewport */
     .viewport {
       flex: 1;
       background-color: #0b0c0e;
-      background-image: radial-gradient(#1f242d 1px, transparent 1px);
-      background-size: 16px 16px;
+      background-image: radial-gradient(#1f242d 1.5px, transparent 1.5px);
+      background-size: 18px 18px;
       position: relative;
       overflow: auto;
       display: flex;
@@ -100,30 +130,31 @@
 
     #canvas-wrapper {
       position: relative;
-      background-color: rgba(0, 0, 0, 0.65);
+      background-color: rgba(0, 0, 0, 0.7);
       border: 2px dashed #444f5c;
-      box-shadow: 0 12px 36px rgba(0,0,0,0.8);
-      overflow: hidden;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.85);
+      transform-origin: center center;
     }
 
-    /* Canvas Element Styling */
+    /* Canvas UI Elements */
     .ui-element {
       position: absolute;
-      border: 1px solid transparent;
+      box-sizing: border-box;
       cursor: move;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-sizing: border-box;
+      overflow: hidden;
     }
     .ui-element.selected {
-      border: 1px solid var(--mc-blue) !important;
-      box-shadow: 0 0 0 1px var(--mc-blue);
+      outline: 2px solid var(--mc-aqua) !important;
+      outline-offset: 1px;
     }
 
-    /* Element Types */
+    /* Element Specific Previews */
     .ui-type-panel { background: rgba(30, 41, 59, 0.85); border: 2px solid #64748b; border-radius: 4px; }
-    .ui-type-title { background: #1e293b; color: #fff; font-weight: bold; border-bottom: 2px solid #00d26a; }
+    .ui-type-image { background: rgba(51, 65, 85, 0.5); border: 1px dashed #64748b; }
+    .ui-type-title { background: #1e293b; color: #fff; font-weight: bold; border-bottom: 2px solid var(--accent); }
     .ui-type-body { background: rgba(15, 23, 42, 0.7); color: #cbd5e1; font-size: 12px; padding: 6px; }
     .ui-type-close { background: #e11d48; color: #fff; font-weight: bold; font-size: 11px; border-radius: 2px; }
     .ui-type-button {
@@ -136,25 +167,30 @@
       justify-content: center;
       gap: 4px;
       padding: 4px;
-      color: #fff;
     }
     .ui-type-button .btn-icon { width: 32px; height: 32px; background: #1e293b; border: 1px dashed #64748b; border-radius: 2px; }
-    .ui-type-button .btn-text { font-size: 11px; text-align: center; }
+    .ui-type-button .btn-label { font-size: 11px; text-align: center; }
 
-    /* Right Sidebar: Inspector */
+    /* Right Sidebar: Property Inspector */
     .sidebar-right {
-      width: 300px;
+      width: 320px;
       background-color: var(--bg-panel);
       border-left: 1px solid var(--border-color);
       display: flex;
       flex-direction: column;
       overflow-y: auto;
     }
-    .inspector-header { padding: 12px; border-bottom: 1px solid var(--border-color); font-weight: 700; font-size: 13px; }
-    .inspector-body { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+    .inspector-header { padding: 12px; border-bottom: 1px solid var(--border-color); font-weight: 700; font-size: 13px; display: flex; justify-content: space-between; }
+    .inspector-body { padding: 12px; display: flex; flex-direction: column; gap: 14px; }
+    
+    .prop-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+    .prop-card-title { font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); }
+    
     .prop-group { display: flex; flex-direction: column; gap: 4px; }
     .prop-group label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
-    .prop-group input, .prop-group select {
+    .prop-group input[type="text"], 
+    .prop-group input[type="number"], 
+    .prop-group select {
       background: var(--bg-input);
       border: 1px solid var(--border-color);
       color: var(--text-main);
@@ -164,21 +200,26 @@
       user-select: text;
     }
     .prop-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+    .slider-row { display: flex; align-items: center; gap: 8px; }
+    .slider-row input[type="range"] { flex: 1; accent-color: var(--accent); }
+    .slider-val { font-size: 11px; font-family: monospace; min-width: 32px; text-align: right; }
 
-    /* Export Modal */
+    /* Modal */
     .modal-overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0,0,0,0.85);
       z-index: 1000;
       align-items: center;
       justify-content: center;
     }
     .modal-content {
       background: var(--bg-panel);
-      width: 800px;
-      max-height: 85vh;
+      width: 820px;
+      max-height: 88vh;
       border: 1px solid var(--border-color);
       border-radius: 8px;
       display: flex;
@@ -196,158 +237,200 @@
       border: 1px solid var(--border-color);
       border-radius: 4px;
       resize: vertical;
-      height: 200px;
+      height: 180px;
       user-select: text;
     }
   </style>
 </head>
 <body>
 
-  <!-- Header -->
+  <!-- Top Toolbar -->
   <header>
     <div class="brand">⛏ Bedrock JSON-UI Builder</div>
     <div class="toolbar-actions">
-      <button class="btn" onclick="setCanvasPreset(432, 243)">Normal (432x243)</button>
-      <button class="btn" onclick="setCanvasPreset(322, 200)">Compact (322x200)</button>
-      <button class="btn" onclick="clearCanvas()">Clear</button>
+      <button class="btn" onclick="setPreset(432, 243)">Wide (432x243)</button>
+      <button class="btn" onclick="setPreset(350, 200)">Standard (350x200)</button>
+      <button class="btn" onclick="setPreset(322, 200)">Compact (322x200)</button>
+      <button class="btn" onclick="setPreset(270, 185)">Mini (270x185)</button>
       <button class="btn btn-primary" onclick="openExportModal()">⚡ Export JSON-UI</button>
     </div>
   </header>
 
-  <!-- Main Container -->
+  <!-- Workspace -->
   <div class="app-container">
-    
-    <!-- Left Component Library -->
+
+    <!-- Left Sidebar: Controls & Tree Hierarchy -->
     <div class="sidebar-left">
-      <div class="section-title">Add Elements</div>
-      <div class="component-list">
-        <button class="comp-btn" onclick="addElement('panel')">🔲 Dialog Panel</button>
-        <button class="comp-btn" onclick="addElement('title')">🏷 Title Bar</button>
-        <button class="comp-btn" onclick="addElement('body')">📄 Body Text Panel</button>
-        <button class="comp-btn" onclick="addElement('close')">❌ Close Button</button>
-        <button class="comp-btn" onclick="addElement('button')">🔘 Action Button</button>
+      <div class="sidebar-section">
+        <div class="section-title">Add Elements</div>
+        <div class="component-grid">
+          <button class="comp-btn" onclick="addElement('panel')">🔲 Panel</button>
+          <button class="comp-btn" onclick="addElement('image')">🖼 Image</button>
+          <button class="comp-btn" onclick="addElement('title')">🏷 Title Bar</button>
+          <button class="comp-btn" onclick="addElement('body')">📄 Body Label</button>
+          <button class="comp-btn" onclick="addElement('button')">🔘 Action Button</button>
+          <button class="comp-btn" onclick="addElement('close')">❌ Close Btn</button>
+        </div>
       </div>
 
-      <div class="section-title" style="margin-top: 12px;">Settings</div>
-      <div class="prop-group">
-        <label>Form Title Filter</label>
-        <input type="text" id="global-title-filter" value="§fCustom Shop§r" onchange="updateFormTitleFilter(this.value)">
+      <div class="sidebar-section" style="padding-bottom: 4px;">
+        <div class="section-title">Element Hierarchy / Layers</div>
       </div>
-      <div class="prop-group">
-        <label>UI Namespace</label>
-        <input type="text" id="global-namespace" value="custom_shop" onchange="updateNamespace(this.value)">
+
+      <!-- Live Tree Manager -->
+      <div class="tree-view" id="element-tree">
+        <!-- Injected via renderTree() -->
       </div>
     </div>
 
-    <!-- Center Viewport -->
+    <!-- Center Canvas Viewport -->
     <div class="viewport" id="viewport">
       <div id="canvas-wrapper" style="width: 432px; height: 243px;">
-        <!-- UI elements dynamically rendered here -->
+        <!-- Injected via renderCanvas() -->
       </div>
     </div>
 
-    <!-- Right Inspector -->
+    <!-- Right Sidebar: Properties & Texture Selector -->
     <div class="sidebar-right">
-      <div class="inspector-header">Properties</div>
+      <div class="inspector-header">
+        <span>Property Inspector</span>
+        <span id="inspect-id-badge" style="color:var(--text-muted); font-size:11px;">No Selection</span>
+      </div>
       <div class="inspector-body" id="inspector-content">
-        <p style="font-size: 12px; color: var(--text-muted);">Select an element on canvas to modify its properties.</p>
+        <p style="font-size: 12px; color: var(--text-muted);">Select an element on canvas or in the layer hierarchy to edit its properties.</p>
       </div>
     </div>
 
   </div>
 
-  <!-- Export Modal -->
+  <!-- Export Code Modal -->
   <div class="modal-overlay" id="export-modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 style="font-size: 14px;">Export Minecraft JSON-UI</h3>
+        <h3 style="font-size: 14px;">Minecraft Bedrock JSON-UI Output</h3>
         <button class="btn" onclick="closeExportModal()">✕</button>
       </div>
       <div class="modal-body">
-        <label class="section-title">1. File: RP/ui/<span id="out-namespace-file">custom_shop</span>.json</label>
-        <textarea class="code-box" id="code-namespace" readonly></textarea>
-
-        <label class="section-title">2. Add to: RP/ui/server_form.json (under long_form.controls)</label>
-        <textarea class="code-box" id="code-server-form" style="height: 120px;" readonly></textarea>
+        <div class="prop-group">
+          <label class="section-title">1. UI Namespace File: RP/ui/<span id="out-ns-name">custom_shop</span>.json</label>
+          <textarea class="code-box" id="code-namespace" readonly></textarea>
+        </div>
+        <div class="prop-group">
+          <label class="section-title">2. server_form.json (Insert inside controls array)</label>
+          <textarea class="code-box" id="code-server-form" style="height: 110px;" readonly></textarea>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Script Logic -->
+  <!-- Builder Script Logic -->
   <script>
     const canvas = document.getElementById('canvas-wrapper');
+    const treeView = document.getElementById('element-tree');
+    const inspectorContent = document.getElementById('inspector-content');
+
     let elements = [];
     let selectedId = null;
     let titleFilter = "§fCustom Shop§r";
     let namespace = "custom_shop";
     let buttonCount = 0;
 
-    // Preset Sizes
-    function setCanvasPreset(w, h) {
+    // Presets for Built-in Textures
+    const TEXTURE_PRESETS = [
+      { name: "Default Turquoise BG", path: "textures/assets/turquoise_default_background" },
+      { name: "Default Turquoise Button", path: "textures/assets/turquoise_default_button" },
+      { name: "Turquoise Button Hover", path: "textures/assets/turquoise_hover_button" },
+      { name: "Turquoise Title BG", path: "textures/assets/turquoise_default_title_background" },
+      { name: "BakaUI Light Button", path: "textures/bakaui/button_light" },
+      { name: "BakaUI Dark BG", path: "textures/bakaui/custom_bg_dark" },
+      { name: "BakaUI Close Button", path: "textures/bakaui/close_button" },
+      { name: "Vanilla Button Black Hover", path: "textures/ui/button_black_hover" },
+      { name: "Vanilla Glass Pane", path: "textures/ui/glass_pane" }
+    ];
+
+    function setPreset(w, h) {
       canvas.style.width = w + 'px';
       canvas.style.height = h + 'px';
+      renderCanvas();
     }
 
-    function updateFormTitleFilter(val) { titleFilter = val; }
-    function updateNamespace(val) { 
-      namespace = val.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-      document.getElementById('out-namespace-file').innerText = namespace;
-    }
-
-    // Add Elements
+    // Add New Element
     function addElement(type) {
       const id = 'el_' + Date.now();
       let newEl = {
         id,
+        name: `${type}_${elements.length + 1}`,
         type,
         x: 20,
         y: 20,
         w: 100,
         h: 30,
+        layer: type === 'panel' ? 1 : type === 'image' ? 2 : 4,
+        alpha: 1.0,
         text: type === 'title' ? '#title_text' : type === 'body' ? '#form_text' : 'Button',
-        texture: 'textures/ui/button_black_hover',
+        fontType: 'MinecraftTen',
         fontSize: 1.0,
-        collectionIndex: type === 'button' ? buttonCount++ : null
+        shadow: false,
+        textAlignment: 'center',
+        texture: type === 'button' ? 'textures/assets/turquoise_default_button' : 'textures/assets/turquoise_default_background',
+        collectionIndex: type === 'button' ? buttonCount++ : null,
+        visible: true
       };
 
       if (type === 'panel') { newEl.w = 390; newEl.h = 200; newEl.x = 20; newEl.y = 20; }
-      if (type === 'title') { newEl.w = 390; newEl.h = 32; newEl.x = 20; newEl.y = 20; }
-      if (type === 'close') { newEl.w = 16; newEl.h = 16; newEl.x = 390; newEl.y = 26; newEl.text = 'X'; }
-      if (type === 'body') { newEl.w = 350; newEl.h = 24; newEl.x = 40; newEl.y = 60; }
-      if (type === 'button') { newEl.w = 80; newEl.h = 90; newEl.x = 40 + (newEl.collectionIndex * 90); newEl.y = 95; }
+      if (type === 'title') { newEl.w = 390; newEl.h = 32; newEl.x = 20; newEl.y = 20; newEl.fontSize = 1.5; }
+      if (type === 'close') { newEl.w = 16; newEl.h = 16; newEl.x = 390; newEl.y = 26; newEl.text = 'X'; newEl.layer = 10; }
+      if (type === 'body') { newEl.w = 350; newEl.h = 24; newEl.x = 40; newEl.y = 60; newEl.textAlignment = 'left'; }
+      if (type === 'button') { newEl.w = 80; newEl.h = 95; newEl.x = 30 + (newEl.collectionIndex * 90); newEl.y = 95; }
 
       elements.push(newEl);
-      renderElements();
+      renderAll();
       selectElement(id);
     }
 
-    // Render Canvas Elements
-    function renderElements() {
+    // Render Canvas
+    function renderCanvas() {
       canvas.innerHTML = '';
       elements.forEach(el => {
+        if (!el.visible) return;
+
         const div = document.createElement('div');
-        div.className = `ui-element ui-type-${el.type}${el.id === selectedId ? 'selected' : ''}`;
+        div.className = `ui-element ui-type-${el.type} ${el.id === selectedId ? 'selected' : ''}`;
         div.style.left = el.x + 'px';
         div.style.top = el.y + 'px';
         div.style.width = el.w + 'px';
         div.style.height = el.h + 'px';
+        div.style.opacity = el.alpha;
+        div.style.zIndex = el.layer;
 
         if (el.type === 'button') {
-          div.innerHTML = `<div class="btn-icon"></div><div class="btn-text">Idx: ${el.collectionIndex}</div>`;
+          div.innerHTML = `<div class="btn-icon"></div><div class="btn-label">${el.text} (#${el.collectionIndex})</div>`;
         } else {
-          div.innerText = el.text;
+          div.innerText = el.text || '';
+          div.style.textAlign = el.textAlignment;
         }
 
-        // Dragging Logic
+        // Mouse Drag Tracking
         div.onmousedown = (e) => {
           e.stopPropagation();
           selectElement(el.id);
-          let startX = e.clientX - el.x;
-          let startY = e.clientY - el.y;
+
+          const canvasRect = canvas.getBoundingClientRect();
+          const clickOffsetX = e.clientX - (canvasRect.left + el.x);
+          const clickOffsetY = e.clientY - (canvasRect.top + el.y);
 
           function onMouseMove(moveEvent) {
-            el.x = Math.max(0, Math.min(canvas.clientWidth - el.w, moveEvent.clientX - startX));
-            el.y = Math.max(0, Math.min(canvas.clientHeight - el.h, moveEvent.clientY - startY));
+            const curRect = canvas.getBoundingClientRect();
+            let newX = moveEvent.clientX - curRect.left - clickOffsetX;
+            let newY = moveEvent.clientY - curRect.top - clickOffsetY;
+
+            // Clamping inside the canvas
+            newX = Math.max(0, Math.min(canvas.clientWidth - el.w, newX));
+            newY = Math.max(0, Math.min(canvas.clientHeight - el.h, newY));
+
+            el.x = Math.round(newX);
+            el.y = Math.round(newY);
+
             div.style.left = el.x + 'px';
             div.style.top = el.y + 'px';
             updateInspectorInputs();
@@ -366,54 +449,174 @@
       });
     }
 
+    // Render Hierarchy Tree
+    function renderTree() {
+      treeView.innerHTML = '';
+      elements.slice().reverse().forEach(el => {
+        const item = document.createElement('div');
+        item.className = `tree-item ${el.id === selectedId ? 'selected' : ''}`;
+        item.onclick = () => selectElement(el.id);
+
+        item.innerHTML = `
+          <span>${el.name} <small style="color:var(--text-muted)">(${el.type})</small></span>
+          <div class="tree-item-actions">
+            <button class="tree-action-btn" onclick="event.stopPropagation(); moveLayer('${el.id}', 1)">▲</button>
+            <button class="tree-action-btn" onclick="event.stopPropagation(); moveLayer('${el.id}', -1)">▼</button>
+            <button class="tree-action-btn" onclick="event.stopPropagation(); toggleVisibility('${el.id}')">${el.visible ? '👁' : '🚫'}</button>
+          </div>
+        `;
+        treeView.appendChild(item);
+      });
+    }
+
+    function moveLayer(id, dir) {
+      const idx = elements.findIndex(e => e.id === id);
+      if (idx < 0) return;
+      const targetIdx = idx + dir;
+      if (targetIdx >= 0 && targetIdx < elements.length) {
+        const temp = elements[idx];
+        elements[idx] = elements[targetIdx];
+        elements[targetIdx] = temp;
+        renderAll();
+      }
+    }
+
+    function toggleVisibility(id) {
+      const el = elements.find(e => e.id === id);
+      if (el) { el.visible = !el.visible; renderAll(); }
+    }
+
+    function renderAll() {
+      renderCanvas();
+      renderTree();
+    }
+
     // Selection & Inspector
     function selectElement(id) {
       selectedId = id;
-      renderElements();
+      renderAll();
       const el = elements.find(e => e.id === id);
-      const container = document.getElementById('inspector-content');
+      const badge = document.getElementById('inspect-id-badge');
 
       if (!el) {
-        container.innerHTML = `<p style="font-size: 12px; color: var(--text-muted);">Select an element on canvas.</p>`;
+        badge.innerText = 'No Selection';
+        inspectorContent.innerHTML = `<p style="font-size: 12px; color: var(--text-muted);">Select an element on canvas.</p>`;
         return;
       }
 
-      container.innerHTML = `
-        <div class="prop-group">
-          <label>Element Type</label>
-          <input type="text" value="${el.type.toUpperCase()}" disabled>
-        </div>
-        <div class="prop-row">
+      badge.innerText = `${el.type.toUpperCase()}`;
+
+      inspectorContent.innerHTML = `
+        <!-- Identification -->
+        <div class="prop-card">
+          <div class="prop-card-title">Element Info</div>
           <div class="prop-group">
-            <label>Offset X</label>
-            <input type="number" id="inp-x" value="${el.x}" onchange="updateProp('x', +this.value)">
-          </div>
-          <div class="prop-group">
-            <label>Offset Y</label>
-            <input type="number" id="inp-y" value="${el.y}" onchange="updateProp('y', +this.value)">
+            <label>Name</label>
+            <input type="text" value="${el.name}" onchange="updateProp('name', this.value)">
           </div>
         </div>
-        <div class="prop-row">
-          <div class="prop-group">
-            <label>Width</label>
-            <input type="number" id="inp-w" value="${el.w}" onchange="updateProp('w', +this.value)">
+
+        <!-- Transform -->
+        <div class="prop-card">
+          <div class="prop-card-title">Transform & Position</div>
+          <div class="prop-row">
+            <div class="prop-group">
+              <label>Offset X</label>
+              <input type="number" id="inp-x" value="${el.x}" onchange="updateProp('x', +this.value)">
+            </div>
+            <div class="prop-group">
+              <label>Offset Y</label>
+              <input type="number" id="inp-y" value="${el.y}" onchange="updateProp('y', +this.value)">
+            </div>
+          </div>
+          <div class="prop-row">
+            <div class="prop-group">
+              <label>Width</label>
+              <input type="number" value="${el.w}" onchange="updateProp('w', +this.value)">
+            </div>
+            <div class="prop-group">
+              <label>Height</label>
+              <input type="number" value="${el.h}" onchange="updateProp('h', +this.value)">
+            </div>
           </div>
           <div class="prop-group">
-            <label>Height</label>
-            <input type="number" id="inp-h" value="${el.h}" onchange="updateProp('h', +this.value)">
+            <label>Layer (z-index)</label>
+            <input type="number" value="${el.layer}" onchange="updateProp('layer', +this.value)">
           </div>
         </div>
+
+        <!-- Texture Selector -->
+        <div class="prop-card">
+          <div class="prop-card-title">Texture</div>
+          <div class="prop-group">
+            <label>Texture Preset</label>
+            <select onchange="updateProp('texture', this.value)">
+              <option value="">-- Choose Preset --</option>
+              ${TEXTURE_PRESETS.map(tp => `<option value="${tp.path}" ${el.texture === tp.path ? 'selected' : ''}>${tp.name}</option>`).join('')}
+            </select>
+          </div>
+          <div class="prop-group">
+            <label>Custom Texture Path</label>
+            <input type="text" value="${el.texture}" onchange="updateProp('texture', this.value)">
+          </div>
+          <div class="prop-group">
+            <label>Alpha / Opacity</label>
+            <div class="slider-row">
+              <input type="range" min="0" max="1" step="0.05" value="${el.alpha}" oninput="updateProp('alpha', +this.value); document.getElementById('val-alpha').innerText = this.value;">
+              <span class="slider-val" id="val-alpha">${el.alpha}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Typography & Text -->
+        <div class="prop-card">
+          <div class="prop-card-title">Text & Font</div>
+          <div class="prop-group">
+            <label>Label / Variable</label>
+            <input type="text" value="${el.text}" onchange="updateProp('text', this.value)">
+          </div>
+          <div class="prop-row">
+            <div class="prop-group">
+              <label>Font Type</label>
+              <select onchange="updateProp('fontType', this.value)">
+                <option value="MinecraftTen" ${el.fontType === 'MinecraftTen' ? 'selected' : ''}>MinecraftTen</option>
+                <option value="MinecraftRegular" ${el.fontType === 'MinecraftRegular' ? 'selected' : ''}>MinecraftRegular</option>
+              </select>
+            </div>
+            <div class="prop-group">
+              <label>Alignment</label>
+              <select onchange="updateProp('textAlignment', this.value)">
+                <option value="center" ${el.textAlignment === 'center' ? 'selected' : ''}>Center</option>
+                <option value="left" ${el.textAlignment === 'left' ? 'selected' : ''}>Left</option>
+                <option value="right" ${el.textAlignment === 'right' ? 'selected' : ''}>Right</option>
+              </select>
+            </div>
+          </div>
+          <div class="prop-group">
+            <label>Font Scale Factor</label>
+            <div class="slider-row">
+              <input type="range" min="0.5" max="3.0" step="0.1" value="${el.fontSize}" oninput="updateProp('fontSize', +this.value); document.getElementById('val-font').innerText = this.value;">
+              <span class="slider-val" id="val-font">${el.fontSize}</span>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <label>Text Shadow</label>
+            <input type="checkbox" ${el.shadow ? 'checked' : ''} onchange="updateProp('shadow', this.checked)">
+          </div>
+        </div>
+
         ${el.collectionIndex !== null ? `
-          <div class="prop-group">
-            <label>Button Collection Index</label>
-            <input type="number" value="${el.collectionIndex}" onchange="updateProp('collectionIndex', +this.value)">
+          <!-- Collection Details -->
+          <div class="prop-card">
+            <div class="prop-card-title">ActionForm Binding</div>
+            <div class="prop-group">
+              <label>Button Collection Index</label>
+              <input type="number" value="${el.collectionIndex}" onchange="updateProp('collectionIndex', +this.value)">
+            </div>
           </div>
         ` : ''}
-        <div class="prop-group">
-          <label>Custom Texture Path</label>
-          <input type="text" value="${el.texture}" onchange="updateProp('texture', this.value)">
-        </div>
-        <button class="btn" style="background:#e11d48; margin-top:12px;" onclick="deleteSelected()">🗑 Delete Element</button>
+
+        <button class="btn btn-danger" style="margin-top: 6px;" onclick="deleteSelected()">🗑 Delete Element</button>
       `;
     }
 
@@ -421,7 +624,7 @@
       const el = elements.find(e => e.id === selectedId);
       if (!el) return;
       el[prop] = val;
-      renderElements();
+      renderAll();
     }
 
     function updateInspectorInputs() {
@@ -435,24 +638,12 @@
     function deleteSelected() {
       elements = elements.filter(e => e.id !== selectedId);
       selectedId = null;
-      renderElements();
-      selectElement(null);
-    }
-
-    function clearCanvas() {
-      elements = [];
-      selectedId = null;
-      buttonCount = 0;
-      renderElements();
+      renderAll();
       selectElement(null);
     }
 
     // Export Generation Logic
     function openExportModal() {
-      const buttons = elements.filter(e => e.type === 'button');
-      const titleEl = elements.find(e => e.type === 'title');
-
-      // Generate Custom Namespace JSON
       const namespaceJson = {
         "namespace": namespace,
         "custom_button": {
@@ -468,7 +659,9 @@
                 "$button_text": "#form_button_text",
                 "$button_text_binding_type": "collection",
                 "$button_text_grid_collection_name": "form_buttons",
-                "bindings": [{ "binding_type": "collection_details", "binding_collection_name": "form_buttons" }]
+                "bindings": [
+                  { "binding_type": "collection_details", "binding_collection_name": "form_buttons" }
+                ]
               }
             }
           ]
@@ -483,16 +676,36 @@
                   "offset": [el.x, el.y],
                   "$button_size": [el.w, el.h],
                   "collection_index": el.collectionIndex,
+                  "layer": el.layer,
                   "anchor_from": "top_left",
                   "anchor_to": "top_left"
                 }
               };
             }
+            if (el.type === 'title') {
+              return {
+                [`title_bar_${i}`]: {
+                  "type": "label",
+                  "offset": [el.x, el.y],
+                  "size": [el.w, el.h],
+                  "layer": el.layer,
+                  "text": "#title_text",
+                  "font_type": el.fontType,
+                  "font_scale_factor": el.fontSize,
+                  "text_alignment": el.textAlignment,
+                  "shadow": el.shadow,
+                  "bindings": [{ "binding_name": "#title_text" }]
+                }
+              };
+            }
             return {
               [`elem_${i}`]: {
-                "type": "panel",
+                "type": el.type === 'image' ? 'image' : 'panel',
                 "size": [el.w, el.h],
                 "offset": [el.x, el.y],
+                "layer": el.layer,
+                "alpha": el.alpha,
+                ...(el.texture ? { "texture": el.texture } : {}),
                 "anchor_from": "top_left",
                 "anchor_to": "top_left"
               }
@@ -501,7 +714,6 @@
         }
       };
 
-      // Generate server_form.json injection block
       const serverFormSnippet = {
         [`${namespace}_panel@${namespace}.${namespace}`]: {
           "layer": 2,
@@ -516,6 +728,7 @@
         }
       };
 
+      document.getElementById('out-ns-name').innerText = namespace;
       document.getElementById('code-namespace').value = JSON.stringify(namespaceJson, null, 2);
       document.getElementById('code-server-form').value = JSON.stringify(serverFormSnippet, null, 2);
       document.getElementById('export-modal').style.display = 'flex';
