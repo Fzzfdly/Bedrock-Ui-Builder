@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minecraft Bedrock JSON-UI Form Builder</title>
+  <style>
+    :root {
+      --bg-dark: #121417;
+      --bg-panel: #1b1e23;
+      --bg-input: #242930;
+      --border-color: #333a44;
+      --accent: #00d26a;
+      --accent-hover: #00b359;
+      --text-main: #f0f3f6;
+      --text-muted: #8c9ba5;
+      --mc-gold: #ffaa00;
+      --mc-blue: #55ffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; }
+    body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Header / Toolbar */
+    header {
+      background-color: var(--bg-panel);
+      border-bottom: 1px solid var(--border-color);
+      height: 52px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+    }
+
+    .brand { font-size: 16px; font-weight: 700; color: var(--mc-gold); display: flex; align-items: center; gap: 8px; }
+    .toolbar-actions { display: flex; gap: 8px; align-items: center; }
+
+    button.btn {
+      background-color: var(--bg-input);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    button.btn:hover { background-color: var(--border-color); }
+    button.btn-primary { background-color: var(--accent); color: #000; border-color: var(--accent); }
+    button.btn-primary:hover { background-color: var(--accent-hover); }
+
+    /* App Layout */
+    .app-container { display: flex; flex: 1; height: calc(100vh - 52px); overflow: hidden; }
+
+    /* Left Sidebar: Components */
+    .sidebar-left {
+      width: 220px;
+      background-color: var(--bg-panel);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      gap: 12px;
+    }
+    .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); font-weight: 700; }
+    .component-list { display: flex; flex-direction: column; gap: 6px; }
+    .comp-btn {
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 8px 10px;
+      border-radius: 4px;
+      text-align: left;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .comp-btn:hover { border-color: var(--accent); }
+
+    /* Center: Viewport */
+    .viewport {
+      flex: 1;
+      background-color: #0b0c0e;
+      background-image: radial-gradient(#1f242d 1px, transparent 1px);
+      background-size: 16px 16px;
+      position: relative;
+      overflow: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    #canvas-wrapper {
+      position: relative;
+      background-color: rgba(0, 0, 0, 0.65);
+      border: 2px dashed #444f5c;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.8);
+      overflow: hidden;
+    }
+
+    /* Canvas Element Styling */
+    .ui-element {
+      position: absolute;
+      border: 1px solid transparent;
+      cursor: move;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+    .ui-element.selected {
+      border: 1px solid var(--mc-blue) !important;
+      box-shadow: 0 0 0 1px var(--mc-blue);
+    }
+
+    /* Element Types */
+    .ui-type-panel { background: rgba(30, 41, 59, 0.85); border: 2px solid #64748b; border-radius: 4px; }
+    .ui-type-title { background: #1e293b; color: #fff; font-weight: bold; border-bottom: 2px solid #00d26a; }
+    .ui-type-body { background: rgba(15, 23, 42, 0.7); color: #cbd5e1; font-size: 12px; padding: 6px; }
+    .ui-type-close { background: #e11d48; color: #fff; font-weight: bold; font-size: 11px; border-radius: 2px; }
+    .ui-type-button {
+      background: #334155;
+      border: 2px solid #475569;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 4px;
+      color: #fff;
+    }
+    .ui-type-button .btn-icon { width: 32px; height: 32px; background: #1e293b; border: 1px dashed #64748b; border-radius: 2px; }
+    .ui-type-button .btn-text { font-size: 11px; text-align: center; }
+
+    /* Right Sidebar: Inspector */
+    .sidebar-right {
+      width: 300px;
+      background-color: var(--bg-panel);
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .inspector-header { padding: 12px; border-bottom: 1px solid var(--border-color); font-weight: 700; font-size: 13px; }
+    .inspector-body { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+    .prop-group { display: flex; flex-direction: column; gap: 4px; }
+    .prop-group label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+    .prop-group input, .prop-group select {
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      user-select: text;
+    }
+    .prop-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    /* Export Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: var(--bg-panel);
+      width: 800px;
+      max-height: 85vh;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-header { padding: 12px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+    textarea.code-box {
+      background: #0d1117;
+      color: #7ee787;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 12px;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      resize: vertical;
+      height: 200px;
+      user-select: text;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">⛏ Bedrock JSON-UI Builder</div>
+    <div class="toolbar-actions">
+      <button class="btn" onclick="setCanvasPreset(432, 243)">Normal (432x243)</button>
+      <button class="btn" onclick="setCanvasPreset(322, 200)">Compact (322x200)</button>
+      <button class="btn" onclick="clearCanvas()">Clear</button>
+      <button class="btn btn-primary" onclick="openExportModal()">⚡ Export JSON-UI</button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="app-container">
+    
+    <!-- Left Component Library -->
+    <div class="sidebar-left">
+      <div class="section-title">Add Elements</div>
+      <div class="component-list">
+        <button class="comp-btn" onclick="addElement('panel')">🔲 Dialog Panel</button>
+        <button class="comp-btn" onclick="addElement('title')">🏷 Title Bar</button>
+        <button class="comp-btn" onclick="addElement('body')">📄 Body Text Panel</button>
+        <button class="comp-btn" onclick="addElement('close')">❌ Close Button</button>
+        <button class="comp-btn" onclick="addElement('button')">🔘 Action Button</button>
+      </div>
+
+      <div class="section-title" style="margin-top: 12px;">Settings</div>
+      <div class="prop-group">
+        <label>Form Title Filter</label>
+        <input type="text" id="global-title-filter" value="§fCustom Shop§r" onchange="updateFormTitleFilter(this.value)">
+      </div>
+      <div class="prop-group">
+        <label>UI Namespace</label>
+        <input type="text" id="global-namespace" value="custom_shop" onchange="updateNamespace(this.value)">
+      </div>
+    </div>
+
+    <!-- Center Viewport -->
+    <div class="viewport" id="viewport">
+      <div id="canvas-wrapper" style="width: 432px; height: 243px;">
+        <!-- UI elements dynamically rendered here -->
+      </div>
+    </div>
+
+    <!-- Right Inspector -->
+    <div class="sidebar-right">
+      <div class="inspector-header">Properties</div>
+      <div class="inspector-body" id="inspector-content">
+        <p style="font-size: 12px; color: var(--text-muted);">Select an element on canvas to modify its properties.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Export Modal -->
+  <div class="modal-overlay" id="export-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="font-size: 14px;">Export Minecraft JSON-UI</h3>
+        <button class="btn" onclick="closeExportModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <label class="section-title">1. File: RP/ui/<span id="out-namespace-file">custom_shop</span>.json</label>
+        <textarea class="code-box" id="code-namespace" readonly></textarea>
+
+        <label class="section-title">2. Add to: RP/ui/server_form.json (under long_form.controls)</label>
+        <textarea class="code-box" id="code-server-form" style="height: 120px;" readonly></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script Logic -->
+  <script>
+    const canvas = document.getElementById('canvas-wrapper');
+    let elements = [];
+    let selectedId = null;
+    let titleFilter = "§fCustom Shop§r";
+    let namespace = "custom_shop";
+    let buttonCount = 0;
+
+    // Preset Sizes
+    function setCanvasPreset(w, h) {
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+    }
+
+    function updateFormTitleFilter(val) { titleFilter = val; }
+    function updateNamespace(val) { 
+      namespace = val.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      document.getElementById('out-namespace-file').innerText = namespace;
+    }
+
+    // Add Elements
+    function addElement(type) {
+      const id = 'el_' + Date.now();
+      let newEl = {
+        id,
+        type,
+        x: 20,
+        y: 20,
+        w: 100,
+        h: 30,
+        text: type === 'title' ? '#title_text' : type === 'body' ? '#form_text' : 'Button',
+        texture: 'textures/ui/button_black_hover',
+        fontSize: 1.0,
+        collectionIndex: type === 'button' ? buttonCount++ : null
+      };
+
+      if (type === 'panel') { newEl.w = 390; newEl.h = 200; newEl.x = 20; newEl.y = 20; }
+      if (type === 'title') { newEl.w = 390; newEl.h = 32; newEl.x = 20; newEl.y = 20; }
+      if (type === 'close') { newEl.w = 16; newEl.h = 16; newEl.x = 390; newEl.y = 26; newEl.text = 'X'; }
+      if (type === 'body') { newEl.w = 350; newEl.h = 24; newEl.x = 40; newEl.y = 60; }
+      if (type === 'button') { newEl.w = 80; newEl.h = 90; newEl.x = 40 + (newEl.collectionIndex * 90); newEl.y = 95; }
+
+      elements.push(newEl);
+      renderElements();
+      selectElement(id);
+    }
+
+    // Render Canvas Elements
+    function renderElements() {
+      canvas.innerHTML = '';
+      elements.forEach(el => {
+        const div = document.createElement('div');
+        div.className = `ui-element ui-type-${el.type}${el.id === selectedId ? 'selected' : ''}`;
+        div.style.left = el.x + 'px';
+        div.style.top = el.y + 'px';
+        div.style.width = el.w + 'px';
+        div.style.height = el.h + 'px';
+
+        if (el.type === 'button') {
+          div.innerHTML = `<div class="btn-icon"></div><div class="btn-text">Idx: ${el.collectionIndex}</div>`;
+        } else {
+          div.innerText = el.text;
+        }
+
+        // Dragging Logic
+        div.onmousedown = (e) => {
+          e.stopPropagation();
+          selectElement(el.id);
+          let startX = e.clientX - el.x;
+          let startY = e.clientY - el.y;
+
+          function onMouseMove(moveEvent) {
+            el.x = Math.max(0, Math.min(canvas.clientWidth - el.w, moveEvent.clientX - startX));
+            el.y = Math.max(0, Math.min(canvas.clientHeight - el.h, moveEvent.clientY - startY));
+            div.style.left = el.x + 'px';
+            div.style.top = el.y + 'px';
+            updateInspectorInputs();
+          }
+
+          function onMouseUp() {
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+          }
+
+          window.addEventListener('mousemove', onMouseMove);
+          window.addEventListener('mouseup', onMouseUp);
+        };
+
+        canvas.appendChild(div);
+      });
+    }
+
+    // Selection & Inspector
+    function selectElement(id) {
+      selectedId = id;
+      renderElements();
+      const el = elements.find(e => e.id === id);
+      const container = document.getElementById('inspector-content');
+
+      if (!el) {
+        container.innerHTML = `<p style="font-size: 12px; color: var(--text-muted);">Select an element on canvas.</p>`;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="prop-group">
+          <label>Element Type</label>
+          <input type="text" value="${el.type.toUpperCase()}" disabled>
+        </div>
+        <div class="prop-row">
+          <div class="prop-group">
+            <label>Offset X</label>
+            <input type="number" id="inp-x" value="${el.x}" onchange="updateProp('x', +this.value)">
+          </div>
+          <div class="prop-group">
+            <label>Offset Y</label>
+            <input type="number" id="inp-y" value="${el.y}" onchange="updateProp('y', +this.value)">
+          </div>
+        </div>
+        <div class="prop-row">
+          <div class="prop-group">
+            <label>Width</label>
+            <input type="number" id="inp-w" value="${el.w}" onchange="updateProp('w', +this.value)">
+          </div>
+          <div class="prop-group">
+            <label>Height</label>
+            <input type="number" id="inp-h" value="${el.h}" onchange="updateProp('h', +this.value)">
+          </div>
+        </div>
+        ${el.collectionIndex !== null ? `
+          <div class="prop-group">
+            <label>Button Collection Index</label>
+            <input type="number" value="${el.collectionIndex}" onchange="updateProp('collectionIndex', +this.value)">
+          </div>
+        ` : ''}
+        <div class="prop-group">
+          <label>Custom Texture Path</label>
+          <input type="text" value="${el.texture}" onchange="updateProp('texture', this.value)">
+        </div>
+        <button class="btn" style="background:#e11d48; margin-top:12px;" onclick="deleteSelected()">🗑 Delete Element</button>
+      `;
+    }
+
+    function updateProp(prop, val) {
+      const el = elements.find(e => e.id === selectedId);
+      if (!el) return;
+      el[prop] = val;
+      renderElements();
+    }
+
+    function updateInspectorInputs() {
+      const el = elements.find(e => e.id === selectedId);
+      if (!el) return;
+      const ix = document.getElementById('inp-x');
+      const iy = document.getElementById('inp-y');
+      if (ix && iy) { ix.value = el.x; iy.value = el.y; }
+    }
+
+    function deleteSelected() {
+      elements = elements.filter(e => e.id !== selectedId);
+      selectedId = null;
+      renderElements();
+      selectElement(null);
+    }
+
+    function clearCanvas() {
+      elements = [];
+      selectedId = null;
+      buttonCount = 0;
+      renderElements();
+      selectElement(null);
+    }
+
+    // Export Generation Logic
+    function openExportModal() {
+      const buttons = elements.filter(e => e.type === 'button');
+      const titleEl = elements.find(e => e.type === 'title');
+
+      // Generate Custom Namespace JSON
+      const namespaceJson = {
+        "namespace": namespace,
+        "custom_button": {
+          "type": "panel",
+          "$button_size|default": [64, 64],
+          "$icon_size|default": [32, 32],
+          "size": "$button_size",
+          "controls": [
+            {
+              "form_button@common_buttons.light_text_button": {
+                "$pressed_button_name": "button.form_button_click",
+                "size": "$button_size",
+                "$button_text": "#form_button_text",
+                "$button_text_binding_type": "collection",
+                "$button_text_grid_collection_name": "form_buttons",
+                "bindings": [{ "binding_type": "collection_details", "binding_collection_name": "form_buttons" }]
+              }
+            }
+          ]
+        },
+        [namespace]: {
+          "type": "panel",
+          "size": [canvas.clientWidth, canvas.clientHeight],
+          "controls": elements.map((el, i) => {
+            if (el.type === 'button') {
+              return {
+                [`btn_${el.collectionIndex}@${namespace}.custom_button`]: {
+                  "offset": [el.x, el.y],
+                  "$button_size": [el.w, el.h],
+                  "collection_index": el.collectionIndex,
+                  "anchor_from": "top_left",
+                  "anchor_to": "top_left"
+                }
+              };
+            }
+            return {
+              [`elem_${i}`]: {
+                "type": "panel",
+                "size": [el.w, el.h],
+                "offset": [el.x, el.y],
+                "anchor_from": "top_left",
+                "anchor_to": "top_left"
+              }
+            };
+          })
+        }
+      };
+
+      // Generate server_form.json injection block
+      const serverFormSnippet = {
+        [`${namespace}_panel@${namespace}.${namespace}`]: {
+          "layer": 2,
+          "bindings": [
+            { "binding_name": "#title_text" },
+            {
+              "binding_type": "view",
+              "source_property_name": `(not((#title_text - '${titleFilter}') = #title_text))`,
+              "target_property_name": "#visible"
+            }
+          ]
+        }
+      };
+
+      document.getElementById('code-namespace').value = JSON.stringify(namespaceJson, null, 2);
+      document.getElementById('code-server-form').value = JSON.stringify(serverFormSnippet, null, 2);
+      document.getElementById('export-modal').style.display = 'flex';
+    }
+
+    function closeExportModal() {
+      document.getElementById('export-modal').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
