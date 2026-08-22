@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft Bedrock JSON-UI Studio (Bedrock Stack Engine)</title>
+  <title>Minecraft Bedrock JSON-UI Studio</title>
   <link href="https://fonts.cdnfonts.com/css/minecraft-4" rel="stylesheet">
   <style>
     :root {
@@ -19,7 +19,8 @@
       --mc-red: #ff5555;
       --text-main: #f3f4f6;
       --text-muted: #8a94a4;
-      --zoom-scale: 1.45;
+      --grid-size: 8px;
+      --zoom-scale: 1.5;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; user-select: none; }
@@ -153,20 +154,31 @@
       padding: 60px;
     }
 
-    /* Outer Dialog Canvas matching in-game size */
-    #dialog-container {
+    #canvas-wrapper {
       position: relative;
-      background-color: rgba(16, 17, 20, 0.95);
+      background-color: rgba(16, 17, 20, 0.94);
       box-shadow: 0 24px 64px rgba(0,0,0,0.95);
+      touch-action: none;
       transform: scale(var(--zoom-scale));
       transform-origin: center center;
       image-rendering: pixelated;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
     }
 
-    /* Template Chrome Elements */
+    /* Subtle Grid Overlay */
+    #canvas-wrapper.grid-on {
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+      background-size: var(--grid-size) var(--grid-size);
+    }
+
+    /* Template Chrome Simulation */
+    .template-chrome {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+    }
     .chrome-label {
       position: absolute;
       top: -26px;
@@ -176,7 +188,6 @@
       font-weight: 700;
       color: #ffffff;
       text-shadow: 1px 1px 0px rgba(0,0,0,0.85);
-      pointer-events: none;
     }
     .chrome-divider {
       position: absolute;
@@ -190,7 +201,6 @@
       border-image-slice: 3 fill;
       border-image-repeat: stretch;
       image-rendering: pixelated;
-      pointer-events: none;
     }
     
     /* Stacked Close Button */
@@ -203,7 +213,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      pointer-events: none;
     }
     .chrome-close-bg {
       position: absolute;
@@ -226,30 +235,23 @@
       image-rendering: pixelated;
     }
     
-    /* Content Stack */
-    #content-stack {
-      width: calc(100% - 16px);
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding-top: 8px;
-    }
-
-    /* Form Body Container */
-    #form-body-wrapper {
-      width: 100%;
+    /* Centered Body with Normal Font */
+    .chrome-body-container {
+      position: absolute;
+      top: 8px;
+      left: 0;
+      right: 0;
       height: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
-      position: relative;
-      margin-bottom: 6px;
+      padding: 0 11px;
+      z-index: 6;
+      transition: height 0.15s ease;
     }
-    .form-body-bg {
+    .chrome-body-bg {
       position: absolute;
-      width: calc(100% - 22px);
-      height: 100%;
+      inset: 0 11px;
       border-style: solid;
       border-width: 3px;
       border-image-source: url('textures/bakaui/custom_bg_dark.png');
@@ -259,7 +261,7 @@
       z-index: 1;
       image-rendering: pixelated;
     }
-    .form-body-text {
+    .chrome-body-text {
       position: relative;
       z-index: 2;
       font-family: 'Minecraft', monospace;
@@ -269,89 +271,101 @@
       text-align: center;
       text-shadow: 1px 1px 0px rgba(0,0,0,0.85);
       line-height: 1.3;
-      padding: 0 16px;
       word-break: break-word;
-    }
-
-    /* True Bedrock Button Stack Panel Container */
-    #button-panel-stack {
+      pointer-events: none;
       width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
     }
 
-    /* Bedrock Row Stack */
-    .bedrock-row-stack {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      min-height: 20px;
-      padding: 2px 4px;
-      border: 1px dashed rgba(255, 255, 255, 0.08);
-      border-radius: 4px;
+    /* Workspace Canvas for Free-Dragging Elements */
+    #button-workspace {
+      position: absolute;
+      inset: 0;
+      pointer-events: auto;
+      z-index: 10;
     }
 
-    /* Bedrock Custom Button Node */
-    .bedrock-btn-node {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
+    /* UI Elements */
+    .ui-element {
+      position: absolute;
+      box-sizing: border-box;
+      cursor: move;
+      touch-action: none;
       image-rendering: pixelated;
     }
 
-    .bedrock-btn-node.selected {
-      outline: 2px solid var(--mc-aqua) !important;
+    .ui-element.selected {
+      outline: 1.5px solid var(--mc-aqua) !important;
       outline-offset: 1px;
     }
 
-    .bedrock-btn-bg {
+    .ui-bg-layer {
       position: absolute;
       inset: 0;
-      border-style: solid;
-      border-width: 3px;
-      border-image-source: url('textures/bakaui/button_light.png');
-      border-image-slice: 3 fill;
-      border-image-repeat: stretch;
+      pointer-events: none;
+      image-rendering: pixelated;
       z-index: 1;
     }
 
-    .bedrock-btn-content {
+    .ui-content-layer {
       position: relative;
       z-index: 2;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .mc-font-ten { font-family: 'Minecraft', monospace; font-weight: 700; letter-spacing: 0.5px; }
+    .mc-font-regular { font-family: 'Minecraft', monospace; font-weight: 400; }
+
+    .btn-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 2px;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
+      gap: 3px;
     }
 
-    .bedrock-btn-icon {
+    .btn-icon {
+      width: 32px;
+      height: 32px;
       background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
       image-rendering: pixelated;
     }
 
-    .bedrock-btn-text {
-      font-family: 'Minecraft', monospace;
-      font-weight: 700;
-      font-size: 10px;
-      color: #ffffff;
-      text-shadow: 1px 1px 0px rgba(0,0,0,0.85);
+    .btn-label-text {
       white-space: nowrap;
+      pointer-events: none;
     }
 
-    /* Right Sidebar */
+    /* 8-Directional Resize Handles */
+    .resize-handle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: var(--mc-aqua);
+      border: 1px solid #000;
+      z-index: 99;
+      pointer-events: auto;
+    }
+    .handle-nw { top: -4px; left: -4px; cursor: nwse-resize; }
+    .handle-ne { top: -4px; right: -4px; cursor: nesw-resize; }
+    .handle-se { bottom: -4px; right: -4px; cursor: nwse-resize; }
+    .handle-sw { bottom: -4px; left: -4px; cursor: nesw-resize; }
+    .handle-n  { top: -4px; left: calc(50% - 4px); cursor: ns-resize; }
+    .handle-s  { bottom: -4px; left: calc(50% - 4px); cursor: ns-resize; }
+    .handle-w  { top: calc(50% - 4px); left: -4px; cursor: ew-resize; }
+    .handle-e  { top: calc(50% - 4px); right: -4px; cursor: ew-resize; }
+
+    /* Right Sidebar: Inspector */
     .sidebar-right {
       width: 320px;
       background-color: var(--bg-panel);
@@ -381,6 +395,12 @@
       user-select: text;
     }
     .prop-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .prop-row-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 4px; }
+    
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+    .slider-row { display: flex; align-items: center; gap: 8px; }
+    .slider-row input[type="range"] { flex: 1; accent-color: var(--accent); }
+    .slider-val { font-size: 11px; font-family: monospace; min-width: 32px; text-align: right; }
 
     /* Modals */
     .modal-overlay {
@@ -422,7 +442,7 @@
 
   <!-- Header -->
   <header>
-    <div class="brand">⛏ Bedrock JSON-UI Studio (True Stack Engine)</div>
+    <div class="brand">⛏ Bedrock JSON-UI Studio (Precision Stack Engine)</div>
     <div class="toolbar-actions">
       <!-- Undo / Redo -->
       <button class="btn" id="btn-undo" onclick="undo()" title="Undo (Ctrl+Z)">↩ Undo</button>
@@ -434,9 +454,20 @@
         <select id="sel-zoom" onchange="setZoomScale(+this.value)">
           <option value="1.0">100%</option>
           <option value="1.25">125%</option>
-          <option value="1.45" selected>145%</option>
+          <option value="1.5" selected>150%</option>
           <option value="1.75">175%</option>
           <option value="2.0">200%</option>
+        </select>
+      </div>
+
+      <!-- Grid Snap -->
+      <div class="control-pill">
+        <label><input type="checkbox" id="chk-grid" checked onchange="toggleGrid(this.checked)"> Grid Snap</label>
+        <select id="sel-grid-size" onchange="setGridSize(+this.value)">
+          <option value="2">2px</option>
+          <option value="4">4px</option>
+          <option value="8" selected>8px</option>
+          <option value="16">16px</option>
         </select>
       </div>
 
@@ -456,15 +487,17 @@
     <!-- Left Sidebar -->
     <div class="sidebar-left">
       <div class="sidebar-section">
-        <div class="section-title">Add & Structure Rows</div>
+        <div class="section-title">Add Elements</div>
         <div class="component-grid">
-          <button class="comp-btn" onclick="addNewRow()">➕ New Button Row</button>
-          <button class="comp-btn" onclick="addButtonToSelectedRow()">🔘 Add Button</button>
+          <button class="comp-btn" onclick="addElement('custom_button')">🔘 Custom Button</button>
+          <button class="comp-btn" onclick="addElement('image')">🖼 Custom Image</button>
+          <button class="comp-btn" onclick="addElement('divider')">➖ Divider Bar</button>
         </div>
       </div>
 
+      <!-- Form Body & Stacking Settings -->
       <div class="sidebar-section">
-        <div class="section-title">Form Body & Title Configuration</div>
+        <div class="section-title">Form Body & Stack Settings</div>
         <div class="prop-group">
           <label>ActionFormData Title (§)</label>
           <input type="text" id="inp-form-binding" value="§fCustom Shop§r" oninput="updateTitleFilter(this.value)">
@@ -474,11 +507,23 @@
           <input type="text" id="inp-menu-name" value="custom_shop" oninput="updateMenuName(this.value)">
         </div>
 
-        <div class="prop-group" style="margin-top: 4px;">
-          <label><input type="checkbox" id="chk-enable-body" checked onchange="toggleBody(this.checked)"> Enable Body Section</label>
+        <div class="prop-row">
+          <div class="prop-group">
+            <label>Left Edge Pad (px)</label>
+            <input type="number" id="inp-left-pad" value="10" min="0" max="40" onchange="updateLeftPad(+this.value)">
+          </div>
+          <div class="prop-group">
+            <label>Button Gap (px)</label>
+            <input type="number" id="inp-btn-gap" value="5" min="0" max="30" onchange="updateBtnGap(+this.value)">
+          </div>
         </div>
 
-        <div id="body-settings-wrapper" style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="toggle-row" style="margin-top: 4px;">
+          <label style="font-size:11px; font-weight:600; color:var(--text-muted);">Enable Body Section</label>
+          <input type="checkbox" id="chk-enable-body" checked onchange="toggleBody(this.checked)">
+        </div>
+
+        <div id="body-settings-wrapper" style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;">
           <div class="prop-group">
             <label>Body Description Text Preview</label>
             <textarea id="inp-body-text" rows="2" oninput="updateBodyText(this.value)">Choose an item from the list below:</textarea>
@@ -489,53 +534,54 @@
               <input type="number" id="inp-body-height" value="28" min="20" max="120" onchange="updateBodyHeight(+this.value)">
             </div>
             <div class="prop-group">
-              <label>Button Gap (px)</label>
-              <input type="number" id="inp-btn-gap" value="5" min="0" max="20" onchange="updateButtonGap(+this.value)">
+              <label>Auto-Height</label>
+              <button class="btn" style="margin-top:2px;" onclick="autoFitBodyHeight()">Auto Fit</button>
             </div>
           </div>
         </div>
       </div>
 
       <div class="sidebar-section" style="padding-bottom: 4px;">
-        <div class="section-title">Hierarchy & Rows <small style="font-size:10px; font-weight:normal;">(Click button to edit)</small></div>
+        <div class="section-title">Hierarchy & Layers <small style="font-size:10px; font-weight:normal;">(Shift/Ctrl: Multi | Ctrl+D: Clone)</small></div>
       </div>
 
       <div class="tree-view" id="element-tree"></div>
     </div>
 
-    <!-- Center Viewport (True In-Game Simulated Canvas) -->
+    <!-- Center Viewport (Interactive Drag & Resize Canvas) -->
     <div class="viewport" id="viewport">
-      <div id="dialog-container" style="width: 322.5px; height: 200px;">
-        <!-- Top Chrome -->
-        <div class="chrome-label" id="disp-chrome-label">§fCustom Shop§r</div>
-        <div class="chrome-divider"></div>
-        <div class="chrome-close">
-          <div class="chrome-close-bg"></div>
-          <div class="chrome-close-icon"></div>
-        </div>
-
-        <!-- Content Stack Flow -->
-        <div id="content-stack">
-          <!-- Body Panel -->
-          <div id="form-body-wrapper">
-            <div class="form-body-bg"></div>
-            <div class="form-body-text" id="disp-body-text">Choose an item from the list below:</div>
+      <div id="canvas-wrapper" class="grid-on" style="width: 322.5px; height: 200px;">
+        <!-- Template Chrome -->
+        <div class="template-chrome">
+          <div class="chrome-label" id="disp-chrome-label">§fCustom Shop§r</div>
+          <div class="chrome-divider"></div>
+          
+          <!-- Stacked Close Button -->
+          <div class="chrome-close">
+            <div class="chrome-close-bg"></div>
+            <div class="chrome-close-icon"></div>
           </div>
-
-          <!-- Centered Bedrock Button Stack Panel -->
-          <div id="button-panel-stack"></div>
+          
+          <!-- Form Body Container -->
+          <div class="chrome-body-container" id="disp-body-container">
+            <div class="chrome-body-bg"></div>
+            <div class="chrome-body-text" id="disp-body-text">Choose an item from the list below:</div>
+          </div>
         </div>
+
+        <!-- Interactive Drag & Resize Workspace -->
+        <div id="button-workspace"></div>
       </div>
     </div>
 
-    <!-- Right Sidebar -->
+    <!-- Right Sidebar: Inspector -->
     <div class="sidebar-right">
       <div class="inspector-header">
         <span>Property Inspector</span>
         <span id="inspect-id-badge" style="color:var(--text-muted); font-size:11px;">No Selection</span>
       </div>
       <div class="inspector-body" id="inspector-content">
-        <p style="font-size: 12px; color: var(--text-muted);">Select a button to inspect and adjust size, padding, texture, or icon.</p>
+        <p style="font-size: 12px; color: var(--text-muted);">Select an element on canvas to inspect and edit properties.</p>
       </div>
     </div>
 
@@ -550,7 +596,7 @@
       </div>
       <div class="modal-body">
         <div class="prop-group">
-          <label class="section-title">1. Centered Button Panel Definition (Place at bottom of server_form.json)</label>
+          <label class="section-title">1. Compensated Stack Button Panel (Place at bottom of server_form.json)</label>
           <textarea class="code-box" id="code-btn-preview" readonly></textarea>
         </div>
         <div class="prop-group">
@@ -582,54 +628,62 @@
   </div>
 
   <script>
-    const dialogContainer = document.getElementById('dialog-container');
-    const buttonPanelStack = document.getElementById('button-panel-stack');
+    const canvas = document.getElementById('canvas-wrapper');
+    const workspace = document.getElementById('button-workspace');
     const treeView = document.getElementById('element-tree');
     const inspectorContent = document.getElementById('inspector-content');
 
-    let rows = [
-      {
-        id: 'row_0',
-        buttons: [
-          { id: 'btn_0', name: 'button_0', w: 64, h: 64, iconSize: 32, text: 'Option 0', collectionIndex: 0, texture: 'textures/bakaui/button_light', iconTexture: 'textures/bakaui/trash' },
-          { id: 'btn_1', name: 'button_1', w: 144, h: 64, iconSize: 32, text: 'Option 1', collectionIndex: 1, texture: 'textures/bakaui/button_light', iconTexture: 'textures/bakaui/trash' },
-          { id: 'btn_2', name: 'button_2', w: 64, h: 64, iconSize: 32, text: 'Option 2', collectionIndex: 2, texture: 'textures/bakaui/button_light', iconTexture: 'textures/bakaui/trash' }
-        ]
-      },
-      {
-        id: 'row_1',
-        buttons: [
-          { id: 'btn_3', name: 'button_3', w: 64, h: 64, iconSize: 32, text: 'Option 3', collectionIndex: 3, texture: 'textures/bakaui/button_light', iconTexture: 'textures/bakaui/trash' }
-        ]
-      }
-    ];
-
-    let selectedButtonId = 'btn_1';
-    let selectedRowId = 'row_0';
-
+    let elements = [];
+    let selectedIds = [];
     let titleFilter = "§fCustom Shop§r";
     let menuName = "custom_shop";
     let enableBody = true;
-    let bodyText = "Choose an item to purchase";
+    let bodyText = "Choose an item from the list below:";
     let bodyHeight = 28;
+    let leftEdgePad = 10;
     let buttonGap = 5;
-    let buttonCounter = 4;
+    let buttonCount = 0;
 
-    let zoomScale = 1.45;
+    let zoomScale = 1.5;
+    let gridSnap = true;
+    let gridSize = 8;
+
     let historyStack = [];
     let historyIndex = -1;
     const MAX_HISTORY = 50;
 
+    const MC_COLORS = [
+      { code: "§f", name: "§f White (Default)", hex: "#ffffff" },
+      { code: "§0", name: "§0 Black", hex: "#000000" },
+      { code: "§1", name: "§1 Dark Blue", hex: "#0000aa" },
+      { code: "§2", name: "§2 Dark Green", hex: "#00aa00" },
+      { code: "§3", name: "§3 Dark Aqua", hex: "#00aaaa" },
+      { code: "§4", name: "§4 Dark Red", hex: "#aa0000" },
+      { code: "§5", name: "§5 Dark Purple", hex: "#aa00aa" },
+      { code: "§6", name: "§6 Gold", hex: "#ffaa00" },
+      { code: "§7", name: "§7 Gray", hex: "#aaaaaa" },
+      { code: "§8", name: "§8 Dark Gray", hex: "#555555" },
+      { code: "§9", name: "§9 Blue", hex: "#5555ff" },
+      { code: "§a", name: "§a Green", hex: "#55ff55" },
+      { code: "§b", name: "§b Aqua", hex: "#55ffff" },
+      { code: "§c", name: "§c Red", hex: "#ff5555" },
+      { code: "§d", name: "§d Light Purple", hex: "#ff55ff" },
+      { code: "§e", name: "§e Yellow", hex: "#ffff55" },
+      { code: "§g", name: "§g Minecoin Gold", hex: "#ddd605" }
+    ];
+
     const TEXTURE_PRESETS = [
-      { name: "Button Light", path: "textures/bakaui/button_light" },
-      { name: "Button Light Hover", path: "textures/bakaui/button_lighthover" },
-      { name: "Button Light Pressed", path: "textures/bakaui/button_lightpressed" },
-      { name: "Custom BG Dark", path: "textures/bakaui/custom_bg_dark" },
-      { name: "Custom BG Black", path: "textures/bakaui/custom_bg" }
+      { name: "Button Light", path: "textures/bakaui/button_light", slice: [3, 3, 3, 3] },
+      { name: "Button Light Hover", path: "textures/bakaui/button_lighthover", slice: [3, 3, 3, 3] },
+      { name: "Button Light Pressed", path: "textures/bakaui/button_lightpressed", slice: [3, 3, 3, 3] },
+      { name: "Custom BG Divider", path: "textures/bakaui/custom_bg_divider", slice: [3, 3, 3, 3] },
+      { name: "Custom BG Dark", path: "textures/bakaui/custom_bg_dark", slice: [3, 3, 3, 3] },
+      { name: "Custom BG Black", path: "textures/bakaui/custom_bg", slice: [3, 3, 3, 3] },
+      { name: "Close Button", path: "textures/bakaui/close_button", slice: [0, 0, 0, 0] }
     ];
 
     function recordState() {
-      const state = JSON.stringify({ rows, enableBody, bodyHeight, bodyText, titleFilter, menuName, buttonGap });
+      const state = JSON.stringify({ elements, enableBody, bodyHeight, bodyText, titleFilter, menuName, leftEdgePad, buttonGap });
       if (historyIndex >= 0 && historyStack[historyIndex] === state) return;
       historyStack = historyStack.slice(0, historyIndex + 1);
       historyStack.push(state);
@@ -642,13 +696,14 @@
       if (historyIndex > 0) {
         historyIndex--;
         const data = JSON.parse(historyStack[historyIndex]);
-        rows = data.rows;
-        enableBody = data.enableBody;
-        bodyHeight = data.bodyHeight;
-        bodyText = data.bodyText;
-        titleFilter = data.titleFilter;
-        menuName = data.menuName;
-        buttonGap = data.buttonGap;
+        elements = data.elements;
+        enableBody = data.enableBody !== undefined ? data.enableBody : true;
+        bodyHeight = data.bodyHeight || 28;
+        bodyText = data.bodyText || "";
+        titleFilter = data.titleFilter || "§fCustom Shop§r";
+        menuName = data.menuName || "custom_shop";
+        leftEdgePad = data.leftEdgePad !== undefined ? data.leftEdgePad : 10;
+        buttonGap = data.buttonGap !== undefined ? data.buttonGap : 5;
         applyChromeSettings();
         renderAll();
         updateInspector();
@@ -660,13 +715,14 @@
       if (historyIndex < historyStack.length - 1) {
         historyIndex++;
         const data = JSON.parse(historyStack[historyIndex]);
-        rows = data.rows;
-        enableBody = data.enableBody;
-        bodyHeight = data.bodyHeight;
-        bodyText = data.bodyText;
-        titleFilter = data.titleFilter;
-        menuName = data.menuName;
-        buttonGap = data.buttonGap;
+        elements = data.elements;
+        enableBody = data.enableBody !== undefined ? data.enableBody : true;
+        bodyHeight = data.bodyHeight || 28;
+        bodyText = data.bodyText || "";
+        titleFilter = data.titleFilter || "§fCustom Shop§r";
+        menuName = data.menuName || "custom_shop";
+        leftEdgePad = data.leftEdgePad !== undefined ? data.leftEdgePad : 10;
+        buttonGap = data.buttonGap !== undefined ? data.buttonGap : 5;
         applyChromeSettings();
         renderAll();
         updateInspector();
@@ -691,19 +747,70 @@
         redo();
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
         e.preventDefault();
-        duplicateSelectedButton();
+        duplicateSelected();
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedIds.length > 0) {
+          e.preventDefault();
+          deleteSelected();
+        }
       }
     });
+
+    function duplicateSelected() {
+      if (selectedIds.length === 0) return;
+      const newSelectedIds = [];
+
+      selectedIds.forEach(id => {
+        const target = elements.find(el => el.id === id);
+        if (!target) return;
+
+        const clone = JSON.parse(JSON.stringify(target));
+        clone.id = 'el_' + Date.now() + Math.random().toString(36).substr(2, 4);
+        clone.x = snap(clone.x + gridSize);
+        clone.y = snap(clone.y + gridSize);
+
+        if (clone.type === 'custom_button') {
+          clone.name = `button_${buttonCount}`;
+          clone.collectionIndex = buttonCount++;
+          clone.text = `Option ${clone.collectionIndex}`;
+        } else {
+          clone.name = `${clone.type}_${elements.length + 1}`;
+        }
+
+        elements.push(clone);
+        newSelectedIds.push(clone.id);
+      });
+
+      selectedIds = newSelectedIds;
+      recordState();
+      renderAll();
+      updateInspector();
+    }
 
     function setZoomScale(val) {
       zoomScale = val;
       document.documentElement.style.setProperty('--zoom-scale', val);
     }
 
+    function toggleGrid(enabled) {
+      gridSnap = enabled;
+      canvas.classList.toggle('grid-on', enabled);
+    }
+
+    function setGridSize(size) {
+      gridSize = size;
+      document.documentElement.style.setProperty('--grid-size', size + 'px');
+    }
+
     function setPreset(w, h) {
-      dialogContainer.style.width = w + 'px';
-      dialogContainer.style.height = h + 'px';
-      renderAll();
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+      renderCanvas();
+    }
+
+    function snap(val) {
+      if (!gridSnap) return Math.round(val);
+      return Math.round(val / gridSize) * gridSize;
     }
 
     function updateTitleFilter(val) {
@@ -717,9 +824,13 @@
       recordState();
     }
 
-    function updateButtonGap(val) {
-      buttonGap = Math.max(0, Math.min(20, val));
-      renderAll();
+    function updateLeftPad(val) {
+      leftEdgePad = Math.max(0, Math.min(50, val));
+      recordState();
+    }
+
+    function updateBtnGap(val) {
+      buttonGap = Math.max(0, Math.min(30, val));
       recordState();
     }
 
@@ -751,187 +862,304 @@
     function applyChromeSettings() {
       document.getElementById('disp-chrome-label').innerText = titleFilter;
       document.getElementById('disp-body-text').innerText = bodyText;
-      document.getElementById('form-body-wrapper').style.height = bodyHeight + 'px';
-      document.getElementById('form-body-wrapper').style.display = enableBody ? 'flex' : 'none';
+      document.getElementById('disp-body-container').style.height = bodyHeight + 'px';
+      document.getElementById('disp-body-container').style.display = enableBody ? 'flex' : 'none';
       document.getElementById('body-settings-wrapper').style.display = enableBody ? 'flex' : 'none';
       document.getElementById('chk-enable-body').checked = enableBody;
 
       document.getElementById('inp-form-binding').value = titleFilter;
       document.getElementById('inp-menu-name').value = menuName;
+      document.getElementById('inp-left-pad').value = leftEdgePad;
+      document.getElementById('inp-btn-gap').value = buttonGap;
       document.getElementById('inp-body-text').value = bodyText;
       document.getElementById('inp-body-height').value = bodyHeight;
-      document.getElementById('inp-btn-gap').value = buttonGap;
     }
 
-    function addNewRow() {
-      const newRowId = `row_${rows.length}`;
-      const newBtn = {
-        id: `btn_${Date.now()}`,
-        name: `button_${buttonCounter}`,
+    function addElement(type) {
+      const id = 'el_' + Date.now();
+      const isButton = (type === 'custom_button');
+      
+      let newEl = {
+        id,
+        name: isButton ? `button_${buttonCount}` : `${type}_${elements.length + 1}`,
+        type,
+        x: 16,
+        y: enableBody ? (bodyHeight + 16) : 20,
         w: 64,
         h: 64,
         iconSize: 32,
-        text: `Option ${buttonCounter}`,
-        collectionIndex: buttonCounter++,
-        texture: 'textures/bakaui/button_light',
-        iconTexture: 'textures/bakaui/trash'
+        layer: isButton ? 4 : type === 'divider' ? 10 : 2,
+        alpha: 1.0,
+        text: isButton ? `Option ${buttonCount}` : '',
+        fontType: 'MinecraftTen',
+        fontSize: 1.0,
+        textColor: '#ffffff',
+        mcColorCode: '§f',
+        shadow: true,
+        texture: isButton ? 'textures/bakaui/button_light' : type === 'divider' ? 'textures/bakaui/custom_bg_divider' : 'textures/bakaui/custom_bg_dark',
+        sliceTop: 3,
+        sliceRight: 3,
+        sliceBottom: 3,
+        sliceLeft: 3,
+        useNineSlice: true,
+        iconTexture: 'textures/bakaui/trash',
+        collectionIndex: isButton ? buttonCount++ : null,
+        visible: true
       };
-      rows.push({ id: newRowId, buttons: [newBtn] });
-      selectedButtonId = newBtn.id;
-      selectedRowId = newRowId;
-      recordState();
-      renderAll();
-      updateInspector();
-    }
 
-    function addButtonToSelectedRow() {
-      let targetRow = rows.find(r => r.id === selectedRowId) || rows[0];
-      if (!targetRow) {
-        addNewRow();
-        return;
+      if (type === 'divider') {
+        newEl.w = 280;
+        newEl.h = 5;
+        newEl.x = 16;
+        newEl.y = enableBody ? (bodyHeight + 10) : 10;
       }
-      const newBtn = {
-        id: `btn_${Date.now()}`,
-        name: `button_${buttonCounter}`,
-        w: 64,
-        h: 64,
-        iconSize: 32,
-        text: `Option ${buttonCounter}`,
-        collectionIndex: buttonCounter++,
-        texture: 'textures/bakaui/button_light',
-        iconTexture: 'textures/bakaui/trash'
-      };
-      targetRow.buttons.push(newBtn);
-      selectedButtonId = newBtn.id;
-      recordState();
-      renderAll();
-      updateInspector();
-    }
 
-    function duplicateSelectedButton() {
-      for (const row of rows) {
-        const idx = row.buttons.findIndex(b => b.id === selectedButtonId);
-        if (idx >= 0) {
-          const orig = row.buttons[idx];
-          const clone = JSON.parse(JSON.stringify(orig));
-          clone.id = `btn_${Date.now()}`;
-          clone.name = `button_${buttonCounter}`;
-          clone.collectionIndex = buttonCounter++;
-          clone.text = `Option ${clone.collectionIndex}`;
-          row.buttons.splice(idx + 1, 0, clone);
-          selectedButtonId = clone.id;
-          recordState();
-          renderAll();
-          updateInspector();
-          return;
-        }
-      }
-    }
+      newEl.x = snap(newEl.x);
+      newEl.y = snap(newEl.y);
+      newEl.w = snap(newEl.w);
+      newEl.h = snap(newEl.h);
 
-    function deleteSelectedButton() {
-      for (const row of rows) {
-        row.buttons = row.buttons.filter(b => b.id !== selectedButtonId);
-      }
-      rows = rows.filter(r => r.buttons.length > 0);
-      selectedButtonId = null;
+      elements.push(newEl);
+      selectedIds = [id];
       recordState();
       renderAll();
       updateInspector();
     }
 
     function renderCanvas() {
-      buttonPanelStack.innerHTML = '';
+      workspace.innerHTML = '';
 
-      rows.forEach((row, rIndex) => {
-        const rowDiv = document.createElement('div');
-        rowDiv.className = 'bedrock-row-stack';
-        rowDiv.style.gap = buttonGap + 'px';
+      elements.forEach(el => {
+        if (!el.visible) return;
 
-        row.buttons.forEach(btn => {
-          const isSelected = (btn.id === selectedButtonId);
-          const btnNode = document.createElement('div');
-          btnNode.className = `bedrock-btn-node ${isSelected ? 'selected' : ''}`;
-          btnNode.style.width = btn.w + 'px';
-          btnNode.style.height = btn.h + 'px';
+        const isSelected = selectedIds.includes(el.id);
+        const div = document.createElement('div');
+        div.id = el.id;
+        div.className = `ui-element ui-type-${el.type} ${isSelected ? 'selected' : ''}`;
+        div.style.left = el.x + 'px';
+        div.style.top = el.y + 'px';
+        div.style.width = el.w + 'px';
+        div.style.height = el.h + 'px';
+        div.style.zIndex = el.layer;
+        div.style.color = el.textColor || '#ffffff';
 
-          btnNode.onclick = (e) => {
-            e.stopPropagation();
-            selectedButtonId = btn.id;
-            selectedRowId = row.id;
-            renderAll();
-            updateInspector();
-          };
+        // 1. Background Layer (9-slice)
+        const bgLayer = document.createElement('div');
+        bgLayer.className = 'ui-bg-layer';
+        bgLayer.style.opacity = el.alpha;
 
-          // 9-slice background
-          const bgDiv = document.createElement('div');
-          bgDiv.className = 'bedrock-btn-bg';
-          bgDiv.style.borderImageSource = `url('${btn.texture}.png')`;
-          btnNode.appendChild(bgDiv);
+        if (el.texture) {
+          const t = el.sliceTop !== undefined ? el.sliceTop : 3;
+          const r = el.sliceRight !== undefined ? el.sliceRight : 3;
+          const b = el.sliceBottom !== undefined ? el.sliceBottom : 3;
+          const l = el.sliceLeft !== undefined ? el.sliceLeft : 3;
 
-          // Content
-          const contentDiv = document.createElement('div');
-          contentDiv.className = 'bedrock-btn-content';
-          contentDiv.innerHTML = `
-            <div class="bedrock-btn-icon" style="background-image: url('${btn.iconTexture}.png'); width:${btn.iconSize}px; height:${btn.iconSize}px;"></div>
-            <div class="bedrock-btn-text">${btn.text}</div>
+          bgLayer.style.borderStyle = 'solid';
+          bgLayer.style.borderWidth = `${t}px ${r}px ${b}px ${l}px`;
+          bgLayer.style.borderImageSource = `url('${el.texture}.png')`;
+          bgLayer.style.borderImageSlice = `${t} ${r} ${b} ${l} fill`;
+          bgLayer.style.borderImageRepeat = 'stretch';
+        }
+        div.appendChild(bgLayer);
+
+        // 2. Content Layer
+        const contentLayer = document.createElement('div');
+        contentLayer.className = 'ui-content-layer';
+
+        const fontClass = el.fontType === 'MinecraftTen' ? 'mc-font-ten' : 'mc-font-regular';
+        const shadowStyle = el.shadow ? 'text-shadow: 1px 1px 0px rgba(0,0,0,0.85);' : '';
+
+        if (el.type === 'custom_button') {
+          contentLayer.innerHTML = `
+            <div class="btn-container">
+              <div class="btn-icon" style="background-image: url('${el.iconTexture || 'textures/bakaui/trash'}.png'); width:${el.iconSize || 32}px; height:${el.iconSize || 32}px;"></div>
+              <div class="btn-label-text ${fontClass}" style="font-size:${10 * el.fontSize}px; ${shadowStyle}">${el.text}</div>
+            </div>
           `;
-          btnNode.appendChild(contentDiv);
+        }
+        div.appendChild(contentLayer);
 
-          rowDiv.appendChild(btnNode);
-        });
+        // 3. 8-Directional Resize Handles
+        if (isSelected && selectedIds.length === 1) {
+          ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].forEach(dir => {
+            const handle = document.createElement('div');
+            handle.className = `resize-handle handle-${dir}`;
+            handle.dataset.dir = dir;
 
-        buttonPanelStack.appendChild(rowDiv);
+            handle.onpointerdown = (e) => {
+              e.stopPropagation();
+              const startMouseX = e.clientX;
+              const startMouseY = e.clientY;
+              const origX = el.x;
+              const origY = el.y;
+              const origW = el.w;
+              const origH = el.h;
+
+              function onResizeMove(moveEv) {
+                const deltaX = (moveEv.clientX - startMouseX) / zoomScale;
+                const deltaY = (moveEv.clientY - startMouseY) / zoomScale;
+
+                let nextX = origX;
+                let nextY = origY;
+                let nextW = origW;
+                let nextH = origH;
+
+                if (dir.includes('e')) nextW = Math.max(gridSize, snap(origW + deltaX));
+                if (dir.includes('s')) nextH = Math.max(gridSize, snap(origH + deltaY));
+                if (dir.includes('w')) {
+                  const snappedW = Math.max(gridSize, snap(origW - deltaX));
+                  nextX = origX + (origW - snappedW);
+                  nextW = snappedW;
+                }
+                if (dir.includes('n')) {
+                  const snappedH = Math.max(gridSize, snap(origH - deltaY));
+                  nextY = origY + (origH - snappedH);
+                  nextH = snappedH;
+                }
+
+                el.x = nextX;
+                el.y = nextY;
+                el.w = nextW;
+                el.h = nextH;
+
+                div.style.left = el.x + 'px';
+                div.style.top = el.y + 'px';
+                div.style.width = el.w + 'px';
+                div.style.height = el.h + 'px';
+
+                updateInspectorCoordinates();
+              }
+
+              function onResizeUp() {
+                window.removeEventListener('pointermove', onResizeMove);
+                window.removeEventListener('pointerup', onResizeUp);
+                recordState();
+                renderAll();
+              }
+
+              window.addEventListener('pointermove', onResizeMove);
+              window.addEventListener('pointerup', onResizeUp);
+            };
+
+            div.appendChild(handle);
+          });
+        }
+
+        // 4. Drag Movement
+        div.onpointerdown = (e) => {
+          if (e.target.classList.contains('resize-handle')) return;
+          e.stopPropagation();
+
+          if (e.shiftKey || e.ctrlKey) {
+            if (selectedIds.includes(el.id)) selectedIds = selectedIds.filter(id => id !== el.id);
+            else selectedIds.push(el.id);
+          } else {
+            if (!selectedIds.includes(el.id)) selectedIds = [el.id];
+          }
+
+          renderAll();
+          updateInspector();
+
+          const startMouseX = e.clientX;
+          const startMouseY = e.clientY;
+          const initialPosMap = new Map();
+          selectedIds.forEach(id => {
+            const targetEl = elements.find(item => item.id === id);
+            if (targetEl) initialPosMap.set(id, { x: targetEl.x, y: targetEl.y, w: targetEl.w, h: targetEl.h });
+          });
+
+          function onDragMove(moveEvent) {
+            const deltaX = (moveEvent.clientX - startMouseX) / zoomScale;
+            const deltaY = (moveEvent.clientY - startMouseY) / zoomScale;
+
+            selectedIds.forEach(id => {
+              const targetEl = elements.find(item => item.id === id);
+              const init = initialPosMap.get(id);
+              if (targetEl && init) {
+                let nextX = snap(init.x + deltaX);
+                let nextY = snap(init.y + deltaY);
+
+                nextX = Math.max(0, Math.min(canvas.clientWidth - targetEl.w, nextX));
+                nextY = Math.max(0, Math.min(canvas.clientHeight - targetEl.h, nextY));
+
+                targetEl.x = nextX;
+                targetEl.y = nextY;
+
+                const node = document.getElementById(targetEl.id);
+                if (node) {
+                  node.style.left = nextX + 'px';
+                  node.style.top = nextY + 'px';
+                }
+              }
+            });
+
+            updateInspectorCoordinates();
+          }
+
+          function onDragUp() {
+            window.removeEventListener('pointermove', onDragMove);
+            window.removeEventListener('pointerup', onDragUp);
+            recordState();
+            renderAll();
+          }
+
+          window.addEventListener('pointermove', onDragMove);
+          window.addEventListener('pointerup', onDragUp);
+        };
+
+        workspace.appendChild(div);
       });
     }
 
     function renderTree() {
       treeView.innerHTML = '';
-      rows.forEach((row, rIdx) => {
-        const rowHeader = document.createElement('div');
-        rowHeader.style.fontSize = '10px';
-        rowHeader.style.fontWeight = 'bold';
-        rowHeader.style.color = 'var(--mc-gold)';
-        rowHeader.style.marginTop = '4px';
-        rowHeader.innerText = `📁 ROW ${rIdx + 1} (${row.buttons.length} buttons)`;
-        treeView.appendChild(rowHeader);
+      elements.slice().reverse().forEach(el => {
+        const item = document.createElement('div');
+        const isSelected = selectedIds.includes(el.id);
+        item.className = `tree-item ${isSelected ? 'selected' : ''}`;
+        
+        item.onclick = (e) => {
+          if (e.shiftKey || e.ctrlKey) {
+            if (selectedIds.includes(el.id)) selectedIds = selectedIds.filter(id => id !== el.id);
+            else selectedIds.push(el.id);
+          } else {
+            selectedIds = [el.id];
+          }
+          renderAll();
+          updateInspector();
+        };
 
-        row.buttons.forEach(btn => {
-          const item = document.createElement('div');
-          const isSelected = (btn.id === selectedButtonId);
-          item.className = `tree-item ${isSelected ? 'selected' : ''}`;
-          item.onclick = () => {
-            selectedButtonId = btn.id;
-            selectedRowId = row.id;
-            renderAll();
-            updateInspector();
-          };
-
-          item.innerHTML = `
-            <span>${btn.name} <small style="color:var(--text-muted)">(${btn.w}x${btn.h})</small></span>
-            <div class="tree-item-actions">
-              <button class="tree-action-btn" onclick="event.stopPropagation(); moveButton('${btn.id}', -1)">▲</button>
-              <button class="tree-action-btn" onclick="event.stopPropagation(); moveButton('${btn.id}', 1)">▼</button>
-            </div>
-          `;
-          treeView.appendChild(item);
-        });
+        item.innerHTML = `
+          <span>${el.name} <small style="color:var(--text-muted)">(${el.type})</small></span>
+          <div class="tree-item-actions">
+            <button class="tree-action-btn" onclick="event.stopPropagation(); moveLayer('${el.id}', 1)">▲</button>
+            <button class="tree-action-btn" onclick="event.stopPropagation(); moveLayer('${el.id}', -1)">▼</button>
+            <button class="tree-action-btn" onclick="event.stopPropagation(); toggleVisibility('${el.id}')">${el.visible ? '👁' : '🚫'}</button>
+          </div>
+        `;
+        treeView.appendChild(item);
       });
     }
 
-    function moveButton(btnId, dir) {
-      for (let r = 0; r < rows.length; r++) {
-        const idx = rows[r].buttons.findIndex(b => b.id === btnId);
-        if (idx >= 0) {
-          const targetIdx = idx + dir;
-          if (targetIdx >= 0 && targetIdx < rows[r].buttons.length) {
-            const temp = rows[r].buttons[idx];
-            rows[r].buttons[idx] = rows[r].buttons[targetIdx];
-            rows[r].buttons[targetIdx] = temp;
-            recordState();
-            renderAll();
-            return;
-          }
-        }
+    function moveLayer(id, dir) {
+      const idx = elements.findIndex(e => e.id === id);
+      if (idx < 0) return;
+      const targetIdx = idx + dir;
+      if (targetIdx >= 0 && targetIdx < elements.length) {
+        const temp = elements[idx];
+        elements[idx] = elements[targetIdx];
+        elements[targetIdx] = temp;
+        recordState();
+        renderAll();
+      }
+    }
+
+    function toggleVisibility(id) {
+      const el = elements.find(e => e.id === id);
+      if (el) { 
+        el.visible = !el.visible; 
+        recordState();
+        renderAll(); 
       }
     }
 
@@ -940,126 +1168,290 @@
       renderTree();
     }
 
-    function getSelectedButton() {
-      for (const row of rows) {
-        const btn = row.buttons.find(b => b.id === selectedButtonId);
-        if (btn) return btn;
-      }
-      return null;
-    }
-
-    function updateBtnProp(prop, val) {
-      const btn = getSelectedButton();
-      if (!btn) return;
-      btn[prop] = val;
-      renderAll();
+    function updateTextColor(val) {
+      if (selectedIds.length === 0) return;
+      const matched = MC_COLORS.find(c => c.hex.toLowerCase() === val.toLowerCase());
+      selectedIds.forEach(id => {
+        const el = elements.find(e => e.id === id);
+        if (el && matched) {
+          el.textColor = matched.hex;
+          el.mcColorCode = matched.code;
+        }
+      });
       recordState();
+      renderAll();
+      updateInspector();
     }
 
     function updateInspector() {
-      const btn = getSelectedButton();
       const badge = document.getElementById('inspect-id-badge');
 
-      if (!btn) {
+      if (selectedIds.length === 0) {
         badge.innerText = 'No Selection';
-        inspectorContent.innerHTML = `<p style="font-size: 12px; color: var(--text-muted);">Select a button on canvas to inspect and edit properties.</p>`;
+        inspectorContent.innerHTML = `<p style="font-size: 12px; color: var(--text-muted);">Select an element on canvas to inspect and edit properties.</p>`;
         return;
       }
 
-      badge.innerText = btn.name.toUpperCase();
+      if (selectedIds.length > 1) {
+        badge.innerText = `${selectedIds.length} SELECTED`;
+        inspectorContent.innerHTML = `
+          <div class="prop-card">
+            <div class="prop-card-title">Multi-Selection Action</div>
+            <p style="font-size: 12px; color: var(--text-muted);">${selectedIds.length} elements selected together.</p>
+            <button class="btn" style="margin-top:8px;" onclick="duplicateSelected()">📋 Duplicate Selected (Ctrl+D)</button>
+            <button class="btn btn-danger" style="margin-top: 6px;" onclick="deleteSelected()">🗑 Delete Selected (${selectedIds.length})</button>
+          </div>
+        `;
+        return;
+      }
+
+      const el = elements.find(e => e.id === selectedIds[0]);
+      if (!el) return;
+
+      badge.innerText = `${el.type.toUpperCase()}`;
+
+      let buttonSpecificHtml = '';
+      if (el.type === 'custom_button') {
+        buttonSpecificHtml = `
+          <div class="prop-card">
+            <div class="prop-card-title">Custom Button Parameters</div>
+            <div class="prop-group">
+              <label>Preview Text</label>
+              <input type="text" value="${el.text}" onchange="updateProp('text', this.value)">
+            </div>
+            <div class="prop-group">
+              <label>Minecraft Color Code (§)</label>
+              <select onchange="updateTextColor(this.value)">
+                ${MC_COLORS.map(c => `<option value="${c.hex}" ${el.textColor.toLowerCase() === c.hex.toLowerCase() ? 'selected' : ''} style="color:${c.hex}; background:#1a1e26; font-weight:bold;">${c.name}</option>`).join('')}
+              </select>
+            </div>
+            <div class="prop-group">
+              <label>Icon Size ($icon_size)</label>
+              <input type="number" value="${el.iconSize || 32}" onchange="updateProp('iconSize', +this.value)">
+            </div>
+            <div class="prop-group">
+              <label>Button Collection Index (collection_index)</label>
+              <input type="number" value="${el.collectionIndex}" onchange="updateProp('collectionIndex', +this.value)">
+            </div>
+          </div>
+        `;
+      }
 
       inspectorContent.innerHTML = `
         <div class="prop-card">
-          <div class="prop-card-title">Button Details</div>
+          <div class="prop-card-title">Element Info</div>
           <div class="prop-group">
-            <label>Control Name</label>
-            <input type="text" value="${btn.name}" onchange="updateBtnProp('name', this.value)">
-          </div>
-          <div class="prop-group">
-            <label>Preview Text</label>
-            <input type="text" value="${btn.text}" onchange="updateBtnProp('text', this.value)">
-          </div>
-          <div class="prop-group">
-            <label>Collection Index</label>
-            <input type="number" value="${btn.collectionIndex}" onchange="updateBtnProp('collectionIndex', +this.value)">
+            <label>Name</label>
+            <input type="text" value="${el.name}" onchange="updateProp('name', this.value)">
           </div>
         </div>
 
         <div class="prop-card">
-          <div class="prop-card-title">Exact Button Size ($button_size)</div>
+          <div class="prop-card-title">Dimensions ($button_size)</div>
           <div class="prop-row">
             <div class="prop-group">
-              <label>Width ($button_size X)</label>
-              <input type="number" value="${btn.w}" onchange="updateBtnProp('w', +this.value)">
+              <label>Offset X</label>
+              <input type="number" id="inp-x" value="${el.x}" onchange="updateProp('x', snap(+this.value))">
             </div>
             <div class="prop-group">
-              <label>Height ($button_size Y)</label>
-              <input type="number" value="${btn.h}" onchange="updateBtnProp('h', +this.value)">
+              <label>Offset Y</label>
+              <input type="number" id="inp-y" value="${el.y}" onchange="updateProp('y', snap(+this.value))">
+            </div>
+          </div>
+          <div class="prop-row">
+            <div class="prop-group">
+              <label>Width</label>
+              <input type="number" id="inp-w" value="${el.w}" onchange="updateProp('w', snap(+this.value))">
+            </div>
+            <div class="prop-group">
+              <label>Height</label>
+              <input type="number" id="inp-h" value="${el.h}" onchange="updateProp('h', snap(+this.value))">
             </div>
           </div>
           <div class="prop-group">
-            <label>Icon Size ($icon_size)</label>
-            <input type="number" value="${btn.iconSize}" onchange="updateBtnProp('iconSize', +this.value)">
+            <label>Layer (z-index)</label>
+            <input type="number" value="${el.layer}" onchange="updateProp('layer', +this.value)">
           </div>
         </div>
 
         <div class="prop-card">
-          <div class="prop-card-title">Textures</div>
+          <div class="prop-card-title">Texture & 9-Slice Slices</div>
           <div class="prop-group">
-            <label>Button Preset</label>
-            <select onchange="updateBtnProp('texture', this.value)">
-              ${TEXTURE_PRESETS.map(tp => `<option value="${tp.path}" ${btn.texture === tp.path ? 'selected' : ''}>${tp.name}</option>`).join('')}
+            <label>BakaUI Preset</label>
+            <select onchange="updateTexturePreset(this.value)">
+              <option value="">-- Choose Texture --</option>
+              ${TEXTURE_PRESETS.map(tp => `<option value="${tp.path}" ${el.texture === tp.path ? 'selected' : ''}>${tp.name}</option>`).join('')}
             </select>
           </div>
           <div class="prop-group">
-            <label>Custom Texture Path</label>
-            <input type="text" value="${btn.texture}" onchange="updateBtnProp('texture', this.value)">
+            <label>Custom Texture Path ($default_button_texture)</label>
+            <input type="text" value="${el.texture}" onchange="updateTexturePreset(this.value)">
           </div>
+
           <div class="prop-group">
-            <label>Icon Path</label>
-            <input type="text" value="${btn.iconTexture}" onchange="updateBtnProp('iconTexture', this.value)">
+            <label>Slice Insets (Top / Right / Bottom / Left)</label>
+            <div class="prop-row-4">
+              <input type="number" title="Top" value="${el.sliceTop !== undefined ? el.sliceTop : 3}" onchange="updateProp('sliceTop', +this.value)">
+              <input type="number" title="Right" value="${el.sliceRight !== undefined ? el.sliceRight : 3}" onchange="updateProp('sliceRight', +this.value)">
+              <input type="number" title="Bottom" value="${el.sliceBottom !== undefined ? el.sliceBottom : 3}" onchange="updateProp('sliceBottom', +this.value)">
+              <input type="number" title="Left" value="${el.sliceLeft !== undefined ? el.sliceLeft : 3}" onchange="updateProp('sliceLeft', +this.value)">
+            </div>
+          </div>
+
+          <div class="prop-group">
+            <label>Texture Opacity</label>
+            <div class="slider-row">
+              <input type="range" min="0" max="1" step="0.05" value="${el.alpha}" oninput="updateProp('alpha', +this.value); document.getElementById('val-alpha').innerText = this.value;">
+              <span class="slider-val" id="val-alpha">${el.alpha}</span>
+            </div>
           </div>
         </div>
 
-        <button class="btn" style="margin-top: 6px;" onclick="duplicateSelectedButton()">📋 Duplicate Button (Ctrl+D)</button>
-        <button class="btn btn-danger" style="margin-top: 6px;" onclick="deleteSelectedButton()">🗑 Delete Button</button>
+        ${buttonSpecificHtml}
+
+        <button class="btn" style="margin-top: 6px;" onclick="duplicateSelected()">📋 Duplicate Element (Ctrl+D)</button>
+        <button class="btn btn-danger" style="margin-top: 6px;" onclick="deleteSelected()">🗑 Delete Element</button>
       `;
     }
 
-    // 100% In-Game Stack Panel Generator
+    function updateTexturePreset(path) {
+      if (selectedIds.length === 0) return;
+      const preset = TEXTURE_PRESETS.find(p => p.path === path);
+      selectedIds.forEach(id => {
+        const el = elements.find(e => e.id === id);
+        if (el) {
+          el.texture = path;
+          if (preset && preset.slice) {
+            el.sliceTop = preset.slice[0];
+            el.sliceRight = preset.slice[1];
+            el.sliceBottom = preset.slice[2];
+            el.sliceLeft = preset.slice[3];
+          }
+        }
+      });
+      recordState();
+      renderAll();
+      updateInspector();
+    }
+
+    function updateProp(prop, val) {
+      if (selectedIds.length === 0) return;
+      selectedIds.forEach(id => {
+        const el = elements.find(e => e.id === id);
+        if (el) el[prop] = val;
+      });
+      recordState();
+      renderAll();
+    }
+
+    function updateInspectorCoordinates() {
+      if (selectedIds.length !== 1) return;
+      const el = elements.find(e => e.id === selectedIds[0]);
+      if (!el) return;
+      const ix = document.getElementById('inp-x');
+      const iy = document.getElementById('inp-y');
+      const iw = document.getElementById('inp-w');
+      const ih = document.getElementById('inp-h');
+      if (ix) ix.value = el.x;
+      if (iy) iy.value = el.y;
+      if (iw) iw.value = el.w;
+      if (ih) ih.value = el.h;
+    }
+
+    function deleteSelected() {
+      elements = elements.filter(e => !selectedIds.includes(e.id));
+      selectedIds = [];
+      recordState();
+      renderAll();
+      updateInspector();
+    }
+
+    // Precise Compensated Stack Panel Generator adhering to the exact padding rules
     function generateButtonPanelJson() {
       const panelName = `my_custom_panel_${menuName}`;
 
-      const rowControls = rows.map((row, rIdx) => {
-        const btnControls = row.buttons.map(btn => {
-          const padW = btn.w + buttonGap;
-          const padH = btn.h + buttonGap;
+      // 1. Sort top-to-bottom, left-to-right
+      const sorted = [...elements].sort((a, b) => a.y - b.y || a.x - b.x);
+
+      // 2. Cluster into distinct rows
+      const rows = [];
+      sorted.forEach(el => {
+        let placed = false;
+        for (const row of rows) {
+          const avgY = row.reduce((sum, item) => sum + item.y, 0) / row.length;
+          if (Math.abs(el.y - avgY) <= 24) {
+            row.push(el);
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) rows.push([el]);
+      });
+
+      // Track accumulated row widths for second/subsequent row padding offsets
+      let prevRowTotalWidth = 0;
+
+      const rowControls = rows.map((rowItems, rowIndex) => {
+        rowItems.sort((a, b) => a.x - b.x);
+
+        let currentRowWidth = 0;
+
+        const itemsControls = rowItems.map((el, i) => {
+          if (el.type === 'custom_button') {
+            let padW = el.w + buttonGap;
+            let padH = el.h + buttonGap;
+
+            // Rule 1: Leftmost button on the row gets +10 padding to align with body
+            if (i === 0) {
+              padW += leftEdgePad;
+            }
+
+            // Rule 2: Multi-row stacking compensation offset
+            if (rowIndex > 0 && i === 0 && prevRowTotalWidth > 0) {
+              padW -= prevRowTotalWidth;
+            }
+
+            currentRowWidth += (el.w + buttonGap);
+
+            return {
+              [`${el.name}@server_form.custom_button`]: {
+                "$button_size": [el.w, el.h],
+                "$padding_size": [padW, padH],
+                "$icon_size": [el.iconSize || 32, el.iconSize || 32],
+                ...(el.texture ? { "$default_button_texture": el.texture } : {}),
+                "collection_index": el.collectionIndex
+              }
+            };
+          }
+
+          currentRowWidth += (el.w + buttonGap);
 
           return {
-            [`${btn.name}@server_form.custom_button`]: {
-              "$button_size": [btn.w, btn.h],
-              "$padding_size": [padW, padH],
-              "$icon_size": [btn.iconSize, btn.iconSize],
-              ...(btn.texture ? { "$default_button_texture": btn.texture } : {}),
-              "collection_index": btn.collectionIndex
+            [`${el.name}`]: {
+              "type": "image",
+              "size": [el.w, el.h],
+              "layer": el.layer,
+              ...(el.alpha !== 1.0 ? { "alpha": el.alpha } : {}),
+              "texture": el.texture || "textures/bakaui/custom_bg_dark"
             }
           };
         });
 
-        // If only 1 row total, return flat array of buttons
+        prevRowTotalWidth = currentRowWidth;
+
         if (rows.length === 1) {
-          return btnControls;
+          return itemsControls;
         }
 
         return {
-          [`row_stack_${rIdx}`]: {
+          [`row_stack_${rowIndex}`]: {
             "type": "stack_panel",
             "size": ["100%c", "100%c"],
             "orientation": "horizontal",
-            "anchor_from": "top_middle",
-            "anchor_to": "top_middle",
+            "anchor_from": "top_left",
+            "anchor_to": "top_left",
             "collection_name": "form_buttons",
-            "controls": btnControls
+            "controls": itemsControls
           }
         };
       });
@@ -1071,19 +1463,20 @@
           "type": "stack_panel",
           "size": ["100%", "100%c"],
           "orientation": rows.length === 1 ? "horizontal" : "vertical",
-          "anchor_from": "top_middle",
-          "anchor_to": "top_middle",
+          "anchor_from": "top_left",
+          "anchor_to": "top_left",
           "collection_name": "form_buttons",
           "controls": finalControls
         }
       };
     }
 
+    // Dialog Entry for long_form.controls
     function generateDialogEntryJson() {
       const dialogId = `bakaui_${menuName}`;
       const btnPanelRef = `server_form.my_custom_panel_${menuName}`;
-      const cw = parseFloat(dialogContainer.style.width) || 322.5;
-      const ch = parseFloat(dialogContainer.style.height) || 200;
+      const cw = parseFloat(canvas.style.width) || 322.5;
+      const ch = parseFloat(canvas.style.height) || 200;
 
       const stackControls = [
         {
@@ -1189,8 +1582,6 @@
     }
 
     applyChromeSettings();
-    renderAll();
-    updateInspector();
     recordState();
   </script>
 </body>
