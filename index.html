@@ -55,7 +55,7 @@
       gap: 6px;
     }
     button.btn:hover:not(:disabled) { background-color: var(--border-color); }
-    button.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.btn:disabled { opacity: 0.35; cursor: not-allowed; }
     button.btn-primary { background-color: var(--accent); color: #000; border-color: var(--accent); }
     button.btn-primary:hover { background-color: var(--accent-hover); }
     button.btn-danger { background-color: rgba(239, 68, 68, 0.2); border-color: var(--mc-red); color: var(--mc-red); }
@@ -81,7 +81,7 @@
       font-size: 11px;
     }
 
-    /* Workspace Layout */
+    /* Workspace */
     .app-container { display: flex; flex: 1; height: calc(100vh - 52px); overflow: hidden; }
 
     /* Left Sidebar */
@@ -156,7 +156,7 @@
 
     #canvas-wrapper {
       position: relative;
-      background-color: rgba(16, 17, 20, 0.9);
+      background-color: rgba(16, 17, 20, 0.92);
       box-shadow: 0 20px 60px rgba(0,0,0,0.95);
       touch-action: none;
       transform: scale(var(--zoom-scale));
@@ -164,11 +164,11 @@
       image-rendering: pixelated;
     }
 
-    /* Transparent / Subtle Grid Overlay */
+    /* Subtle Grid Overlay */
     #canvas-wrapper.grid-on {
       background-image: 
-        linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+        linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
       background-size: var(--grid-size) var(--grid-size);
     }
 
@@ -186,7 +186,7 @@
       outline-offset: 1px;
     }
 
-    /* Independent Texture Background Layer */
+    /* Background Layer (Independent Opacity) */
     .ui-bg-layer {
       position: absolute;
       inset: 0;
@@ -197,7 +197,7 @@
       z-index: 1;
     }
 
-    /* Content Layer (Solid 100% Text & Icon Opacity) */
+    /* Content Layer (Solid 100% Text & Icon) */
     .ui-content-layer {
       position: relative;
       z-index: 2;
@@ -340,7 +340,7 @@
       <button class="btn" id="btn-undo" onclick="undo()" title="Undo (Ctrl+Z)">↩ Undo</button>
       <button class="btn" id="btn-redo" onclick="redo()" title="Redo (Ctrl+Y)">↪ Redo</button>
 
-      <!-- Zoom Scale Selection -->
+      <!-- Zoom Dropdown -->
       <div class="control-pill">
         <span>Zoom</span>
         <select id="sel-zoom" onchange="setZoomScale(+this.value)">
@@ -376,7 +376,7 @@
   <!-- Workspace -->
   <div class="app-container">
 
-    <!-- Left Sidebar: Controls, Form Binding & Tree Hierarchy -->
+    <!-- Left Sidebar: Controls & Tree Hierarchy -->
     <div class="sidebar-left">
       <div class="sidebar-section">
         <div class="section-title">Add Elements</div>
@@ -401,7 +401,7 @@
       </div>
 
       <div class="sidebar-section" style="padding-bottom: 4px;">
-        <div class="section-title">Hierarchy & Layers <small style="font-size:10px; font-weight:normal;">(Hold Shift to Multi-select)</small></div>
+        <div class="section-title">Hierarchy & Layers <small style="font-size:10px; font-weight:normal;">(Shift/Ctrl to Multi-select)</small></div>
       </div>
 
       <div class="tree-view" id="element-tree"></div>
@@ -512,7 +512,6 @@
       { name: "Close Button Hover", path: "textures/bakaui/close_button_hover" }
     ];
 
-    // Undo / Redo Engine
     function recordState() {
       const state = JSON.stringify(elements);
       if (historyIndex >= 0 && historyStack[historyIndex] === state) return;
@@ -548,7 +547,6 @@
       document.getElementById('btn-redo').disabled = (historyIndex >= historyStack.length - 1);
     }
 
-    // Keyboard Shortcuts (Ctrl+Z / Ctrl+Y)
     window.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
@@ -694,7 +692,7 @@
         div.style.zIndex = el.layer;
         div.style.color = el.textColor || '#ffffff';
 
-        // 1. Independent Background Texture Layer
+        // 1. Background Texture Layer (Independent Opacity)
         const bgLayer = document.createElement('div');
         bgLayer.className = 'ui-bg-layer';
         bgLayer.style.opacity = el.alpha;
@@ -719,7 +717,7 @@
         }
         div.appendChild(bgLayer);
 
-        // 2. Content Layer (Solid Text / Icon)
+        // 2. Content Layer
         const contentLayer = document.createElement('div');
         contentLayer.className = 'ui-content-layer';
 
@@ -741,7 +739,7 @@
         }
         div.appendChild(contentLayer);
 
-        // 3. Single-Element Resize Handles
+        // 3. Resize Handles
         if (isSelected && selectedIds.length === 1) {
           ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].forEach(dir => {
             const handle = document.createElement('div');
@@ -807,21 +805,16 @@
           });
         }
 
-        // 4. Element Drag Movement (With Multi-Select Drag Engine)
+        // 4. Element Drag Movement
         div.onpointerdown = (e) => {
           if (e.target.classList.contains('resize-handle')) return;
           e.stopPropagation();
 
           if (e.shiftKey || e.ctrlKey) {
-            if (selectedIds.includes(el.id)) {
-              selectedIds = selectedIds.filter(id => id !== el.id);
-            } else {
-              selectedIds.push(el.id);
-            }
+            if (selectedIds.includes(el.id)) selectedIds = selectedIds.filter(id => id !== el.id);
+            else selectedIds.push(el.id);
           } else {
-            if (!selectedIds.includes(el.id)) {
-              selectedIds = [el.id];
-            }
+            if (!selectedIds.includes(el.id)) selectedIds = [el.id];
           }
 
           renderAll();
@@ -1182,6 +1175,7 @@
       updateInspector();
     }
 
+    // Fully Validated Bedrock JSON-UI Export Engine
     function generateNamespaceJson() {
       return {
         "namespace": namespace,
@@ -1189,17 +1183,87 @@
           "type": "panel",
           "$button_size|default": [64, 64],
           "$icon_size|default": [32, 32],
+          "$icon_offset|default": [0, -6],
+          "$text_offset|default": [0, 20],
+          "$font_type|default": "MinecraftTen",
+          "$font_size|default": 1.0,
+          "$shadow|default": true,
+          "$default_button_texture|default": "textures/bakaui/button_light",
+          "$hover_button_texture|default": "textures/bakaui/button_lighthover",
+          "$pressed_button_texture|default": "textures/bakaui/button_lightpressed",
           "size": "$button_size",
+          "bindings": [
+            {
+              "binding_name": "#form_button_text",
+              "binding_type": "collection",
+              "binding_collection_name": "form_buttons"
+            }
+          ],
           "controls": [
             {
-              "form_button@common_buttons.light_text_button": {
-                "$pressed_button_name": "button.form_button_click",
-                "size": "$button_size",
-                "$button_text": "#form_button_text",
-                "$button_text_binding_type": "collection",
-                "$button_text_grid_collection_name": "form_buttons",
+              "icon": {
+                "type": "image",
+                "layer": 3,
+                "size": "$icon_size",
+                "offset": "$icon_offset",
+                "anchor_from": "center",
+                "anchor_to": "center",
                 "bindings": [
-                  { "binding_type": "collection_details", "binding_collection_name": "form_buttons" }
+                  {
+                    "binding_name": "#form_button_texture",
+                    "binding_name_override": "#texture",
+                    "binding_type": "collection",
+                    "binding_collection_name": "form_buttons"
+                  },
+                  {
+                    "binding_name": "#form_button_texture_file_system",
+                    "binding_name_override": "#texture_file_system",
+                    "binding_type": "collection",
+                    "binding_collection_name": "form_buttons"
+                  },
+                  {
+                    "binding_type": "view",
+                    "source_property_name": "(not ((#texture = '') or (#texture = 'loading')))",
+                    "target_property_name": "#visible"
+                  }
+                ]
+              }
+            },
+            {
+              "label": {
+                "type": "label",
+                "layer": 4,
+                "text": "#form_button_text",
+                "font_type": "$font_type",
+                "font_scale_factor": "$font_size",
+                "shadow": "$shadow",
+                "offset": "$text_offset",
+                "anchor_from": "center",
+                "anchor_to": "center",
+                "bindings": [
+                  {
+                    "binding_name": "#form_button_text",
+                    "binding_type": "collection",
+                    "binding_collection_name": "form_buttons"
+                  }
+                ]
+              }
+            },
+            {
+              "button@common_buttons.light_content_button": {
+                "$pressed_button_name": "button.form_button_click",
+                "$default_button_texture": "$default_button_texture",
+                "$hover_button_texture": "$hover_button_texture",
+                "$pressed_button_texture": "$pressed_button_texture",
+                "size": "$button_size",
+                "anchor_from": "top_left",
+                "anchor_to": "top_left",
+                "$button_text": "#null",
+                "bindings": [
+                  {
+                    "binding_type": "collection_details",
+                    "binding_collection_name": "form_buttons"
+                  }
                 ]
               }
             }
@@ -1208,12 +1272,20 @@
         [namespace]: {
           "type": "panel",
           "size": [canvas.clientWidth, canvas.clientHeight],
+          "anchor_from": "center",
+          "anchor_to": "center",
+          "collection_name": "form_buttons",
           "controls": elements.map((el, i) => {
             if (el.type === 'button') {
               return {
                 [`btn_${el.collectionIndex}@${namespace}.custom_button`]: {
                   "offset": [el.x, el.y],
                   "$button_size": [el.w, el.h],
+                  "$icon_offset": [el.iconOffsetX || 0, el.iconOffsetY || -6],
+                  "$text_offset": [el.textOffsetX || 0, el.textOffsetY || 20],
+                  "$font_type": el.fontType || "MinecraftTen",
+                  "$font_size": el.fontSize || 1.0,
+                  "$default_button_texture": el.texture || "textures/bakaui/button_light",
                   "collection_index": el.collectionIndex,
                   "layer": el.layer,
                   "anchor_from": "top_left",
@@ -1233,6 +1305,8 @@
                   "font_scale_factor": el.fontSize,
                   "text_alignment": el.textAlignment,
                   "shadow": el.shadow,
+                  "anchor_from": "top_left",
+                  "anchor_to": "top_left",
                   "bindings": [{ "binding_name": "#title_text" }]
                 }
               };
@@ -1249,17 +1323,31 @@
                   "font_scale_factor": el.fontSize,
                   "text_alignment": el.textAlignment,
                   "shadow": el.shadow,
+                  "anchor_from": "top_left",
+                  "anchor_to": "top_left",
                   "bindings": [{ "binding_name": "#form_text" }]
                 }
               };
             }
+            if (el.type === 'close') {
+              return {
+                [`close_${i}@server_form.my_close_button`]: {
+                  "offset": [el.x, el.y],
+                  "size": [el.w, el.h],
+                  "layer": el.layer,
+                  "anchor_from": "top_left",
+                  "anchor_to": "top_left"
+                }
+              };
+            }
+            // For panel, image, divider: Output strictly valid 'image' control type
             return {
               [`${el.type}_${i}`]: {
-                "type": el.type === 'image' || el.type === 'divider' ? 'image' : 'panel',
+                "type": el.texture ? "image" : "panel",
                 "size": [el.w, el.h],
                 "offset": [el.x, el.y],
                 "layer": el.layer,
-                "alpha": el.alpha,
+                ...(el.alpha !== 1.0 ? { "alpha": el.alpha } : {}),
                 ...(el.texture ? { "texture": el.texture } : {}),
                 "anchor_from": "top_left",
                 "anchor_to": "top_left"
