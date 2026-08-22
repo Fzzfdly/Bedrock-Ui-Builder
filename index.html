@@ -136,10 +136,14 @@
     .tree-action-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px 4px; font-size: 12px; border-radius: 2px; }
     .tree-action-btn:hover { color: var(--text-main); background: var(--bg-input); }
 
-    /* Center Viewport */
+    /* Center Viewport with background.png support */
     .viewport {
       flex: 1;
       background-color: #050608;
+      background-image: url('background.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
       position: relative;
       overflow: auto;
       display: flex;
@@ -150,7 +154,7 @@
 
     #canvas-wrapper {
       position: relative;
-      background-color: #101114;
+      background-color: rgba(16, 17, 20, 0.9);
       box-shadow: 0 20px 60px rgba(0,0,0,0.95);
       touch-action: none;
       transform: scale(var(--zoom-scale));
@@ -160,8 +164,8 @@
 
     #canvas-wrapper.grid-on {
       background-image: 
-        linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+        linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
       background-size: var(--grid-size) var(--grid-size);
     }
 
@@ -179,7 +183,7 @@
       outline-offset: 1px;
     }
 
-    /* Independent Texture Background Layer */
+    /* Background Texture Layer */
     .ui-bg-layer {
       position: absolute;
       inset: 0;
@@ -190,7 +194,7 @@
       z-index: 1;
     }
 
-    /* Content Layer (Solid 100% Text & Icon Opacity) */
+    /* Content Layer */
     .ui-content-layer {
       position: relative;
       z-index: 2;
@@ -209,23 +213,27 @@
 
     /* Button Structure */
     .btn-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 3px;
+      position: relative;
       width: 100%;
       height: 100%;
-      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .btn-icon {
-      width: 30px;
-      height: 30px;
+      width: 32px;
+      height: 32px;
       background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
       image-rendering: pixelated;
+    }
+
+    .btn-label-text {
+      position: absolute;
+      white-space: nowrap;
+      pointer-events: none;
     }
 
     /* Resize Handles */
@@ -332,7 +340,7 @@
           <option value="1.0">100%</option>
           <option value="1.25">125%</option>
           <option value="1.5">150%</option>
-          <option value="1.6" selected>160% (Default)</option>
+          <option value="1.6" selected>160%</option>
           <option value="1.8">180%</option>
           <option value="2.0">200%</option>
         </select>
@@ -370,6 +378,7 @@
           <button class="comp-btn" onclick="addElement('image')">🖼 Image</button>
           <button class="comp-btn" onclick="addElement('title')">🏷 Title Bar</button>
           <button class="comp-btn" onclick="addElement('button')">🔘 Action Button</button>
+          <button class="comp-btn" onclick="addElement('divider')">➖ Custom Divider</button>
           <button class="comp-btn" onclick="addElement('close')">❌ Close Btn</button>
         </div>
       </div>
@@ -381,7 +390,7 @@
       <div class="tree-view" id="element-tree"></div>
     </div>
 
-    <!-- Center Viewport -->
+    <!-- Center Viewport with Background -->
     <div class="viewport" id="viewport">
       <div id="canvas-wrapper" class="grid-on" style="width: 350px; height: 200px;"></div>
     </div>
@@ -450,7 +459,6 @@
     let gridSnap = true;
     let gridSize = 8;
 
-    // Complete Minecraft Bedrock § Color Table
     const MC_COLORS = [
       { code: "§0", name: "§0 Black", hex: "#000000" },
       { code: "§1", name: "§1 Dark Blue", hex: "#0000aa" },
@@ -547,7 +555,7 @@
         y: 16,
         w: 96,
         h: 32,
-        layer: type === 'panel' ? 1 : type === 'image' ? 2 : 4,
+        layer: type === 'panel' ? 1 : type === 'image' ? 2 : type === 'divider' ? 10 : 4,
         alpha: 1.0,
         text: type === 'title' ? 'Menu Title' : type === 'button' ? 'Button' : '',
         fontType: 'MinecraftTen',
@@ -556,10 +564,14 @@
         mcColorCode: type === 'button' ? '§0' : '§f',
         shadow: true,
         textAlignment: 'center',
-        texture: type === 'button' ? 'textures/bakaui/button_light' : type === 'close' ? 'textures/bakaui/close_button' : 'textures/bakaui/custom_bg_dark',
+        textOffsetX: 0,
+        textOffsetY: 20,
+        iconOffsetX: 0,
+        iconOffsetY: -6,
+        texture: type === 'button' ? 'textures/bakaui/button_light' : type === 'divider' ? 'textures/bakaui/custom_bg_divider' : type === 'close' ? 'textures/bakaui/close_button' : 'textures/bakaui/custom_bg_dark',
         iconTexture: 'textures/bakaui/trash',
         collectionIndex: type === 'button' ? buttonCount++ : null,
-        useNineSlice: type === 'button' || type === 'panel',
+        useNineSlice: type === 'button' || type === 'panel' || type === 'divider',
         sliceTop: 4,
         sliceRight: 4,
         sliceBottom: 4,
@@ -569,6 +581,7 @@
 
       if (type === 'panel') { newEl.w = 320; newEl.h = 180; newEl.x = 16; newEl.y = 10; }
       if (type === 'title') { newEl.w = 320; newEl.h = 24; newEl.x = 16; newEl.y = 10; newEl.fontSize = 1.2; newEl.useNineSlice = false; }
+      if (type === 'divider') { newEl.w = 320; newEl.h = 5; newEl.x = 16; newEl.y = 36; newEl.layer = 10; }
       if (type === 'close') { newEl.w = 14; newEl.h = 14; newEl.x = 320; newEl.y = 14; newEl.layer = 64; newEl.useNineSlice = false; }
       if (type === 'button') { newEl.w = 64; newEl.h = 64; newEl.x = 32 + (newEl.collectionIndex * 72); newEl.y = 80; }
 
@@ -623,7 +636,7 @@
         }
         div.appendChild(bgLayer);
 
-        // 2. Content Layer (Solid 100% Text & Icon Opacity)
+        // 2. Content Layer
         const contentLayer = document.createElement('div');
         contentLayer.className = 'ui-content-layer';
 
@@ -633,8 +646,8 @@
         if (el.type === 'button') {
           contentLayer.innerHTML = `
             <div class="btn-container">
-              <div class="btn-icon" style="background-image: url('${el.iconTexture || 'textures/bakaui/trash'}.png');"></div>
-              <div class="${fontClass}" style="font-size:${11 * el.fontSize}px; ${shadowStyle}">${el.text}</div>
+              <div class="btn-icon" style="transform: translate(${el.iconOffsetX || 0}px, ${el.iconOffsetY || 0}px); background-image: url('${el.iconTexture || 'textures/bakaui/trash'}.png');"></div>
+              <div class="btn-label-text ${fontClass}" style="transform: translate(${el.textOffsetX || 0}px, ${el.textOffsetY || 0}px); font-size:${11 * el.fontSize}px; ${shadowStyle}">${el.text}</div>
             </div>
           `;
         } else if (el.type === 'title') {
@@ -710,7 +723,7 @@
           });
         }
 
-        // 4. Element Drag Movement via Window Listeners
+        // 4. Element Drag Movement
         div.onpointerdown = (e) => {
           if (e.target.classList.contains('resize-handle')) return;
 
@@ -829,22 +842,39 @@
 
       if (!el) {
         badge.innerText = 'No Selection';
-        inspectorContent.innerHTML = `<p style="font-size: 12px; color: var(--text-muted);">Select an element on canvas.</p>`;
+        inspectorContent.innerHTML = `<p style="font-size: 12px; color: var(--text-muted);">Select an element on canvas to inspect and edit properties.</p>`;
         return;
       }
 
       badge.innerText = `${el.type.toUpperCase()}`;
 
-      // Only Button and Title Bar allow Label / Typography Editing
       let textCardHtml = '';
       if (el.type === 'button' || el.type === 'title') {
         textCardHtml = `
           <div class="prop-card">
-            <div class="prop-card-title">${el.type === 'button' ? 'Button Label' : 'ActionForm Title'}</div>
+            <div class="prop-card-title">${el.type === 'button' ? 'Button Label & Alignment' : 'ActionForm Title'}</div>
             <div class="prop-group">
               <label>${el.type === 'button' ? 'Button Text' : 'Title Text'}</label>
               <input type="text" value="${el.text}" onchange="updateProp('text', this.value)">
             </div>
+            
+            ${el.type === 'button' ? `
+              <div class="prop-group">
+                <label>Text Position Inside Button (Offset X / Y)</label>
+                <div class="prop-row">
+                  <input type="number" title="Offset X" value="${el.textOffsetX || 0}" onchange="updateProp('textOffsetX', +this.value)">
+                  <input type="number" title="Offset Y" value="${el.textOffsetY || 0}" onchange="updateProp('textOffsetY', +this.value)">
+                </div>
+              </div>
+              <div class="prop-group">
+                <label>Icon Position (Offset X / Y)</label>
+                <div class="prop-row">
+                  <input type="number" title="Icon X" value="${el.iconOffsetX || 0}" onchange="updateProp('iconOffsetX', +this.value)">
+                  <input type="number" title="Icon Y" value="${el.iconOffsetY || 0}" onchange="updateProp('iconOffsetY', +this.value)">
+                </div>
+              </div>
+            ` : ''}
+
             <div class="prop-group">
               <label>Minecraft Color Code (§)</label>
               <select onchange="updateTextColor(this.value)">
@@ -860,23 +890,13 @@
                 </select>
               </div>
               <div class="prop-group">
-                <label>Alignment</label>
-                <select onchange="updateProp('textAlignment', this.value)">
-                  <option value="center" ${el.textAlignment === 'center' ? 'selected' : ''}>Center</option>
-                  <option value="left" ${el.textAlignment === 'left' ? 'selected' : ''}>Left</option>
-                  <option value="right" ${el.textAlignment === 'right' ? 'selected' : ''}>Right</option>
-                </select>
-              </div>
-            </div>
-            <div class="prop-row">
-              <div class="prop-group">
                 <label>Font Scale</label>
                 <input type="number" step="0.1" value="${el.fontSize}" onchange="updateProp('fontSize', +this.value)">
               </div>
-              <div class="toggle-row" style="margin-top: 18px;">
-                <label>Text Shadow</label>
-                <input type="checkbox" ${el.shadow ? 'checked' : ''} onchange="updateProp('shadow', this.checked)">
-              </div>
+            </div>
+            <div class="toggle-row" style="margin-top: 4px;">
+              <label>Text Shadow</label>
+              <input type="checkbox" ${el.shadow ? 'checked' : ''} onchange="updateProp('shadow', this.checked)">
             </div>
           </div>
         `;
@@ -935,7 +955,7 @@
 
           ${el.type === 'button' ? `
             <div class="prop-group">
-              <label>Button Icon (Default: trash.png)</label>
+              <label>Button Icon Path</label>
               <input type="text" value="${el.iconTexture || 'textures/bakaui/trash'}" onchange="updateProp('iconTexture', this.value)">
             </div>
           ` : ''}
@@ -958,7 +978,7 @@
           ` : ''}
 
           <div class="prop-group">
-            <label>Texture Opacity (Text Remains 100% Solid)</label>
+            <label>Texture Opacity</label>
             <div class="slider-row">
               <input type="range" min="0" max="1" step="0.05" value="${el.alpha}" oninput="updateProp('alpha', +this.value); document.getElementById('val-alpha').innerText = this.value;">
               <span class="slider-val" id="val-alpha">${el.alpha}</span>
@@ -1074,8 +1094,8 @@
               };
             }
             return {
-              [`elem_${i}`]: {
-                "type": el.type === 'image' ? 'image' : 'panel',
+              [`${el.type}_${i}`]: {
+                "type": el.type === 'image' || el.type === 'divider' ? 'image' : 'panel',
                 "size": [el.w, el.h],
                 "offset": [el.x, el.y],
                 "layer": el.layer,
