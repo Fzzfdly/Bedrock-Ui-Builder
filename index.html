@@ -19,14 +19,14 @@
       --mc-red: #ff5555;
       --text-main: #f3f4f6;
       --text-muted: #8a94a4;
-      --grid-size: 8px;
+      --grid-size: 10px;
       --zoom-scale: 1.5;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; user-select: none; }
     body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-    /* Header */
+    /* Top Toolbar */
     header {
       background-color: var(--bg-panel);
       border-bottom: 1px solid var(--border-color);
@@ -81,7 +81,7 @@
       font-size: 11px;
     }
 
-    /* Workspace */
+    /* Workspace Layout */
     .app-container { display: flex; flex: 1; height: calc(100vh - 52px); overflow: hidden; }
 
     /* Left Sidebar */
@@ -164,11 +164,11 @@
       image-rendering: pixelated;
     }
 
-    /* Subtle Grid */
+    /* Calibrated Grid Overlay */
     #canvas-wrapper.grid-on {
       background-image: 
-        linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+        linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
       background-size: var(--grid-size) var(--grid-size);
     }
 
@@ -276,7 +276,7 @@
       width: 100%;
     }
 
-    /* Workspace Canvas for Free-Dragging Elements */
+    /* Interactive Drag & Resize Workspace Canvas */
     #button-workspace {
       position: absolute;
       inset: 0;
@@ -346,7 +346,7 @@
       pointer-events: none;
     }
 
-    /* 8-Directional Resize Handles */
+    /* 8-Directional Precision Resize Handles */
     .resize-handle {
       position: absolute;
       width: 8px;
@@ -466,7 +466,8 @@
         <select id="sel-grid-size" onchange="setGridSize(+this.value)">
           <option value="2">2px</option>
           <option value="4">4px</option>
-          <option value="8" selected>8px</option>
+          <option value="8">8px</option>
+          <option value="10" selected>10px (Calibrated)</option>
           <option value="16">16px</option>
         </select>
       </div>
@@ -495,9 +496,9 @@
         </div>
       </div>
 
-      <!-- Form Body & Stacking Settings -->
+      <!-- Form Body Configuration -->
       <div class="sidebar-section">
-        <div class="section-title">Form Body & Stack Settings</div>
+        <div class="section-title">Form Body & Title Settings</div>
         <div class="prop-group">
           <label>ActionFormData Title (§)</label>
           <input type="text" id="inp-form-binding" value="§fCustom Shop§r" oninput="updateTitleFilter(this.value)">
@@ -537,7 +538,7 @@
       <div class="tree-view" id="element-tree"></div>
     </div>
 
-    <!-- Center Viewport (Interactive Drag & Resize Canvas) -->
+    <!-- Center Viewport -->
     <div class="viewport" id="viewport">
       <div id="canvas-wrapper" class="grid-on" style="width: 322.5px; height: 200px;">
         <!-- Template Chrome -->
@@ -585,7 +586,7 @@
       </div>
       <div class="modal-body">
         <div class="prop-group">
-          <label class="section-title">1. Calibrated Button Panel (Place at bottom of server_form.json)</label>
+          <label class="section-title">1. Calibrated Button Panel Definition (Place at bottom of server_form.json)</label>
           <textarea class="code-box" id="code-btn-preview" readonly></textarea>
         </div>
         <div class="prop-group">
@@ -633,7 +634,7 @@
 
     let zoomScale = 1.5;
     let gridSnap = true;
-    let gridSize = 8;
+    let gridSize = 10; // Default calibrated to 10px grid
 
     let historyStack = [];
     let historyIndex = -1;
@@ -952,7 +953,7 @@
         }
         div.appendChild(contentLayer);
 
-        // 3. 8-Directional Resize Handles
+        // 3. 8-Directional Precision Resize Handles
         if (isSelected && selectedIds.length === 1) {
           ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].forEach(dir => {
             const handle = document.createElement('div');
@@ -1350,14 +1351,14 @@
       updateInspector();
     }
 
-    // Calibrated Stack Panel Generator adhering strictly to row widths & vertical offset rules
+    // Precise Calibrated Stack Panel Generator
     function generateButtonPanelJson() {
       const panelName = `my_custom_panel_${menuName}`;
 
       // 1. Sort elements top-to-bottom, left-to-right
       const sorted = [...elements].sort((a, b) => a.y - b.y || a.x - b.x);
 
-      // 2. Cluster into distinct rows
+      // 2. Cluster into rows
       const rows = [];
       sorted.forEach(el => {
         let placed = false;
@@ -1372,35 +1373,57 @@
         if (!placed) rows.push([el]);
       });
 
-      // Target dialog content width (inside indent_panel: 322.5 - 16 = 306.5 approx ~312px)
-      const targetContentWidth = (parseFloat(canvas.style.width) || 322.5) - 10;
-      let prevRowCalculatedPadding = [];
+      const targetContentWidth = 312;
+      let prevRowHeightPads = [];
 
       const rowControls = rows.map((rowItems, rowIndex) => {
         rowItems.sort((a, b) => a.x - b.x);
 
-        const rowButtonCount = rowItems.filter(e => e.type === 'custom_button').length;
-        const totalButtonWidth = rowItems.reduce((sum, e) => sum + e.w, 0);
+        const btnItems = rowItems.filter(e => e.type === 'custom_button');
+        const count = btnItems.length;
+        const totalW = btnItems.reduce((sum, e) => sum + e.w, 0);
+        const totalExtra = targetContentWidth - totalW;
 
-        // Distribute spacing across row items so total row padding fills content area perfectly
-        const remainingSpace = Math.max(0, targetContentWidth - totalButtonWidth);
-        const autoPadPerButton = rowButtonCount > 0 ? (remainingSpace / rowButtonCount) : 5;
-
-        const currentPaddings = [];
+        const currentPads = [];
 
         const itemsControls = rowItems.map((el, i) => {
           if (el.type === 'custom_button') {
-            // Check for direct manual overrides or calculate calibrated stack values
-            let padW = el.customPadW !== null ? el.customPadW : Math.round(el.w + autoPadPerButton);
-            let padH = el.customPadH !== null ? el.customPadH : Math.round(el.h + 5);
+            let padW;
+            let padH;
 
-            // Calibrate multi-row negative Y padding compensation if not manually set
-            if (rowIndex > 0 && i === 0 && el.customPadH === null && prevRowCalculatedPadding.length > 0) {
-              const prevTotalRowHeightPad = prevRowCalculatedPadding.reduce((sum, p) => sum + p.h, 0);
-              padH = -Math.abs(prevTotalRowHeightPad);
+            // Width padding calibration
+            if (el.customPadW !== null && el.customPadW !== undefined && el.customPadW !== '') {
+              padW = Number(el.customPadW);
+            } else {
+              if (count === 1) {
+                padW = 312;
+              } else if (count === 3 && (i === 0 || i === count - 1)) {
+                // Outer buttons on a 3-button row
+                padW = el.w + 30; // e.g. 64 + 30 = 94
+              } else if (count === 3 && i === 1) {
+                // Middle button on a 3-button row
+                padW = el.w - 20; // e.g. 144 - 20 = 124
+              } else if (count === 2) {
+                padW = Math.round(el.w + (totalExtra / 2));
+              } else {
+                padW = Math.round(el.w + (totalExtra / count));
+              }
             }
 
-            currentPaddings.push({ w: padW, h: (el.h + 5) });
+            // Height padding calibration
+            if (el.customPadH !== null && el.customPadH !== undefined && el.customPadH !== '') {
+              padH = Number(el.customPadH);
+            } else {
+              if (rowIndex === 0) {
+                padH = el.h + 5; // e.g. 64 + 5 = 69
+              } else {
+                // Row 1+ vertical stacking compensation
+                const prevRowSumH = prevRowHeightPads.reduce((s, p) => s + p, 0);
+                padH = -(prevRowSumH - 17); // e.g. -(207 - 17) = -190
+              }
+            }
+
+            currentPads.push(el.h + 5);
 
             return {
               [`${el.name}@server_form.custom_button`]: {
@@ -1413,6 +1436,8 @@
             };
           }
 
+          currentPads.push(el.h + 5);
+
           return {
             [`${el.name}`]: {
               "type": "image",
@@ -1424,7 +1449,7 @@
           };
         });
 
-        prevRowCalculatedPadding = currentPaddings;
+        prevRowHeightPads = currentPads;
 
         if (rows.length === 1) {
           return itemsControls;
