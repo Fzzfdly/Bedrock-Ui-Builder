@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft Bedrock JSON-UI Studio (BakaUI Template Edition)</title>
+  <title>Minecraft Bedrock JSON-UI Studio (BakaUI Adaptive Edition)</title>
   <link href="https://fonts.cdnfonts.com/css/minecraft-4" rel="stylesheet">
   <style>
     :root {
@@ -20,13 +20,13 @@
       --text-main: #f3f4f6;
       --text-muted: #8a94a4;
       --grid-size: 8px;
-      --zoom-scale: 1.6;
+      --zoom-scale: 1.5;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; user-select: none; }
     body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-    /* Header */
+    /* Top Toolbar */
     header {
       background-color: var(--bg-panel);
       border-bottom: 1px solid var(--border-color);
@@ -86,7 +86,7 @@
 
     /* Left Sidebar */
     .sidebar-left {
-      width: 270px;
+      width: 280px;
       background-color: var(--bg-panel);
       border-right: 1px solid var(--border-color);
       display: flex;
@@ -156,14 +156,15 @@
 
     #canvas-wrapper {
       position: relative;
-      background-color: rgba(16, 17, 20, 0.92);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.95);
+      background-color: rgba(16, 17, 20, 0.94);
+      box-shadow: 0 24px 64px rgba(0,0,0,0.95);
       touch-action: none;
       transform: scale(var(--zoom-scale));
       transform-origin: center center;
       image-rendering: pixelated;
     }
 
+    /* Subtle Transparent Grid */
     #canvas-wrapper.grid-on {
       background-image: 
         linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
@@ -171,12 +172,12 @@
       background-size: var(--grid-size) var(--grid-size);
     }
 
-    /* Fixed Template Chrome Overlay (Rendered to match BakaUI) */
+    /* Template Chrome Simulation (Matches BakaUI Architecture) */
     .template-chrome {
       position: absolute;
       inset: 0;
       pointer-events: none;
-      z-index: 50;
+      z-index: 5;
     }
     .chrome-label {
       position: absolute;
@@ -194,8 +195,11 @@
       left: -9px;
       right: -9px;
       height: 5px;
-      background-image: url('textures/bakaui/custom_bg_divider.png');
-      background-size: 100% 100%;
+      border-style: solid;
+      border-width: 1px 4px 1px 4px;
+      border-image-source: url('textures/bakaui/custom_bg_divider.png');
+      border-image-slice: 1 4 1 4 fill;
+      border-image-repeat: stretch;
       image-rendering: pixelated;
     }
     .chrome-close {
@@ -208,20 +212,43 @@
       background-size: 100% 100%;
       image-rendering: pixelated;
     }
-    .chrome-body {
+    
+    /* Adaptive Form Body Container */
+    .chrome-body-container {
       position: absolute;
-      top: 8px;
-      left: 0;
-      right: 0;
+      top: 12px;
+      left: 8px;
+      right: 8px;
       height: 28px;
-      background: rgba(0,0,0,0.4);
       display: flex;
       align-items: center;
-      padding: 0 8px;
+      justify-content: flex-start;
+      padding: 0 11px;
+      z-index: 6;
+      transition: height 0.15s ease;
+    }
+    .chrome-body-bg {
+      position: absolute;
+      inset: 0 11px;
+      border-style: solid;
+      border-width: 4px;
+      border-image-source: url('textures/bakaui/custom_bg_dark.png');
+      border-image-slice: 4 fill;
+      border-image-repeat: stretch;
+      opacity: 0.85;
+      z-index: 1;
+      image-rendering: pixelated;
+    }
+    .chrome-body-text {
+      position: relative;
+      z-index: 2;
       font-family: 'Minecraft', monospace;
       font-size: 11px;
-      color: #e0e0e0;
-      border: 1px solid rgba(255,255,255,0.05);
+      color: #ffffff;
+      text-shadow: 1px 1px 0px rgba(0,0,0,0.85);
+      line-height: 1.3;
+      word-break: break-word;
+      pointer-events: none;
     }
 
     /* UI Elements */
@@ -243,8 +270,6 @@
       inset: 0;
       pointer-events: none;
       image-rendering: pixelated;
-      background-size: 100% 100%;
-      background-repeat: no-repeat;
       z-index: 1;
     }
 
@@ -326,6 +351,7 @@
     .prop-group label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
     .prop-group input[type="text"], 
     .prop-group input[type="number"], 
+    .prop-group textarea,
     .prop-group select {
       background: var(--bg-input);
       border: 1px solid var(--border-color);
@@ -383,7 +409,7 @@
 
   <!-- Header -->
   <header>
-    <div class="brand">⛏ Bedrock JSON-UI Studio (BakaUI Engine)</div>
+    <div class="brand">⛏ Bedrock JSON-UI Studio (Adaptive BakaUI)</div>
     <div class="toolbar-actions">
       <!-- Undo / Redo -->
       <button class="btn" id="btn-undo" onclick="undo()" title="Undo (Ctrl+Z)">↩ Undo</button>
@@ -395,9 +421,8 @@
         <select id="sel-zoom" onchange="setZoomScale(+this.value)">
           <option value="1.0">100%</option>
           <option value="1.25">125%</option>
-          <option value="1.5">150%</option>
-          <option value="1.6" selected>160%</option>
-          <option value="1.8">180%</option>
+          <option value="1.5" selected>150%</option>
+          <option value="1.75">175%</option>
           <option value="2.0">200%</option>
         </select>
       </div>
@@ -413,11 +438,10 @@
         </select>
       </div>
 
-      <!-- Template Presets matching your server_form.json -->
       <button class="btn" onclick="setPreset(350, 200)">Default (350x200)</button>
-      <button class="btn" onclick="setPreset(322.5, 200)">Cosmetic/Shop (322.5x200)</button>
+      <button class="btn" onclick="setPreset(322.5, 200)">Shop (322.5x200)</button>
       <button class="btn" onclick="setPreset(300, 185)">Perks (300x185)</button>
-      <button class="btn" onclick="setPreset(270, 185)">Dragon/Rank (270x185)</button>
+      <button class="btn" onclick="setPreset(270, 185)">Dragon (270x185)</button>
 
       <button class="btn" onclick="openPreviewModal()">🔍 Preview JSON</button>
       <button class="btn btn-primary" onclick="openExportModal()">⚡ Export for server_form.json</button>
@@ -427,7 +451,7 @@
   <!-- Workspace -->
   <div class="app-container">
 
-    <!-- Left Sidebar: Controls & Tree Hierarchy -->
+    <!-- Left Sidebar: Controls & Adaptive Body Settings -->
     <div class="sidebar-left">
       <div class="sidebar-section">
         <div class="section-title">Add Elements</div>
@@ -440,16 +464,30 @@
         </div>
       </div>
 
+      <!-- Adaptive Body & Title Configuration -->
       <div class="sidebar-section">
-        <div class="section-title">ActionFormData Form Binding</div>
+        <div class="section-title">Form Body & Background Settings</div>
         <div class="prop-group">
-          <label>Form Title Filter Check</label>
+          <label>ActionFormData Title (§)</label>
           <input type="text" id="inp-form-binding" value="§fCustom Shop§r" oninput="updateTitleFilter(this.value)">
-          <small style="color:var(--text-muted); font-size:10px;">The exact title your script passes to open this UI.</small>
         </div>
         <div class="prop-group">
-          <label>Menu Identifier / Name</label>
+          <label>Menu Identifier Name</label>
           <input type="text" id="inp-menu-name" value="custom_shop" oninput="updateMenuName(this.value)">
+        </div>
+        <div class="prop-group">
+          <label>Body Description Text Preview</label>
+          <textarea id="inp-body-text" rows="2" oninput="updateBodyText(this.value)">Choose an item from the list below:</textarea>
+        </div>
+        <div class="prop-row">
+          <div class="prop-group">
+            <label>Body Height (px)</label>
+            <input type="number" id="inp-body-height" value="28" min="20" max="100" onchange="updateBodyHeight(+this.value)">
+          </div>
+          <div class="prop-group">
+            <label>Auto-Height</label>
+            <button class="btn" style="margin-top:2px;" onclick="autoFitBodyHeight()">Auto Fit</button>
+          </div>
         </div>
       </div>
 
@@ -463,12 +501,15 @@
     <!-- Center Viewport with Background -->
     <div class="viewport" id="viewport">
       <div id="canvas-wrapper" class="grid-on" style="width: 322.5px; height: 200px;">
-        <!-- Fixed BakaUI Chrome Template overlay -->
+        <!-- Fixed BakaUI Chrome Template overlay with Adaptive Body Container -->
         <div class="template-chrome">
           <div class="chrome-label" id="disp-chrome-label">§fCustom Shop§r</div>
           <div class="chrome-divider"></div>
           <div class="chrome-close"></div>
-          <div class="chrome-body">Form Body Description Text (#form_text)</div>
+          <div class="chrome-body-container" id="disp-body-container">
+            <div class="chrome-body-bg"></div>
+            <div class="chrome-body-text" id="disp-body-text">Choose an item from the list below:</div>
+          </div>
         </div>
       </div>
     </div>
@@ -511,12 +552,12 @@
       </div>
       <div class="modal-body">
         <div class="prop-group">
-          <label class="section-title">1. Paste at the bottom of server_form.json (Button Panel Definition)</label>
-          <textarea class="code-box" id="code-btn-panel" readonly></textarea>
+          <label class="section-title">1. Paste at the bottom of server_form.json (Button Panel & Custom Body Definitions)</label>
+          <textarea class="code-box" id="code-btn-panel" style="height: 200px;" readonly></textarea>
         </div>
         <div class="prop-group">
           <label class="section-title">2. Paste inside long_form.controls in server_form.json (Dialog Panel Entry)</label>
-          <textarea class="code-box" id="code-dialog-panel" style="height: 160px;" readonly></textarea>
+          <textarea class="code-box" id="code-dialog-panel" style="height: 150px;" readonly></textarea>
         </div>
       </div>
     </div>
@@ -531,9 +572,11 @@
     let selectedIds = [];
     let titleFilter = "§fCustom Shop§r";
     let menuName = "custom_shop";
+    let bodyText = "Choose an item from the list below:";
+    let bodyHeight = 28;
     let buttonCount = 0;
 
-    let zoomScale = 1.6;
+    let zoomScale = 1.5;
     let gridSnap = true;
     let gridSize = 8;
 
@@ -562,17 +605,17 @@
     ];
 
     const TEXTURE_PRESETS = [
-      { name: "Button Light", path: "textures/bakaui/button_light" },
-      { name: "Button Light Hover", path: "textures/bakaui/button_lighthover" },
-      { name: "Button Light Pressed", path: "textures/bakaui/button_lightpressed" },
-      { name: "Custom BG Divider", path: "textures/bakaui/custom_bg_divider" },
-      { name: "Custom BG Dark", path: "textures/bakaui/custom_bg_dark" },
-      { name: "Custom BG Black", path: "textures/bakaui/custom_bg" },
-      { name: "Close Button", path: "textures/bakaui/close_button" }
+      { name: "Button Light", path: "textures/bakaui/button_light", slice: [4, 4, 4, 4] },
+      { name: "Button Light Hover", path: "textures/bakaui/button_lighthover", slice: [4, 4, 4, 4] },
+      { name: "Button Light Pressed", path: "textures/bakaui/button_lightpressed", slice: [4, 4, 4, 4] },
+      { name: "Custom BG Divider", path: "textures/bakaui/custom_bg_divider", slice: [1, 4, 1, 4] },
+      { name: "Custom BG Dark", path: "textures/bakaui/custom_bg_dark", slice: [4, 4, 4, 4] },
+      { name: "Custom BG Black", path: "textures/bakaui/custom_bg", slice: [4, 4, 4, 4] },
+      { name: "Close Button", path: "textures/bakaui/close_button", slice: [0, 0, 0, 0] }
     ];
 
     function recordState() {
-      const state = JSON.stringify(elements);
+      const state = JSON.stringify({ elements, bodyHeight, bodyText, titleFilter, menuName });
       if (historyIndex >= 0 && historyStack[historyIndex] === state) return;
       historyStack = historyStack.slice(0, historyIndex + 1);
       historyStack.push(state);
@@ -584,7 +627,13 @@
     function undo() {
       if (historyIndex > 0) {
         historyIndex--;
-        elements = JSON.parse(historyStack[historyIndex]);
+        const data = JSON.parse(historyStack[historyIndex]);
+        elements = data.elements;
+        bodyHeight = data.bodyHeight || 28;
+        bodyText = data.bodyText || "";
+        titleFilter = data.titleFilter || "§fCustom Shop§r";
+        menuName = data.menuName || "custom_shop";
+        applyChromeSettings();
         renderAll();
         updateInspector();
         updateUndoRedoButtons();
@@ -594,7 +643,13 @@
     function redo() {
       if (historyIndex < historyStack.length - 1) {
         historyIndex++;
-        elements = JSON.parse(historyStack[historyIndex]);
+        const data = JSON.parse(historyStack[historyIndex]);
+        elements = data.elements;
+        bodyHeight = data.bodyHeight || 28;
+        bodyText = data.bodyText || "";
+        titleFilter = data.titleFilter || "§fCustom Shop§r";
+        menuName = data.menuName || "custom_shop";
+        applyChromeSettings();
         renderAll();
         updateInspector();
         updateUndoRedoButtons();
@@ -651,10 +706,41 @@
     function updateTitleFilter(val) {
       titleFilter = val;
       document.getElementById('disp-chrome-label').innerText = val;
+      recordState();
     }
 
     function updateMenuName(val) {
       menuName = val.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      recordState();
+    }
+
+    function updateBodyText(val) {
+      bodyText = val;
+      document.getElementById('disp-body-text').innerText = val;
+      recordState();
+    }
+
+    function updateBodyHeight(val) {
+      bodyHeight = Math.max(20, Math.min(120, val));
+      applyChromeSettings();
+      recordState();
+    }
+
+    function autoFitBodyHeight() {
+      const lineCount = (bodyText.match(/\n/g) || []).length + 1;
+      const calcHeight = Math.max(28, lineCount * 14 + 14);
+      document.getElementById('inp-body-height').value = calcHeight;
+      updateBodyHeight(calcHeight);
+    }
+
+    function applyChromeSettings() {
+      document.getElementById('disp-chrome-label').innerText = titleFilter;
+      document.getElementById('disp-body-text').innerText = bodyText;
+      document.getElementById('disp-body-container').style.height = bodyHeight + 'px';
+      document.getElementById('inp-form-binding').value = titleFilter;
+      document.getElementById('inp-menu-name').value = menuName;
+      document.getElementById('inp-body-text').value = bodyText;
+      document.getElementById('inp-body-height').value = bodyHeight;
     }
 
     function addElement(type) {
@@ -666,7 +752,7 @@
         name: isButton ? `button_${buttonCount}` : `${type}_${elements.length + 1}`,
         type,
         x: 16,
-        y: 48, // Placed below the body text area
+        y: Math.max(50, bodyHeight + 24),
         w: type === 'custom_button_menu' ? 127.5 : type === 'custom_button_shop' ? 128 : 64,
         h: type === 'custom_button_menu' ? 20 : 64,
         paddingW: type === 'custom_button_menu' ? 137.5 : type === 'custom_button_shop' ? 133 : 69,
@@ -677,10 +763,15 @@
         text: isButton ? `Option ${buttonCount}` : '',
         fontType: 'MinecraftTen',
         fontSize: 1.0,
-        textColor: '#000000',
-        mcColorCode: '§0',
+        textColor: '#ffffff',
+        mcColorCode: '§f',
         shadow: true,
         texture: isButton ? 'textures/bakaui/button_light' : type === 'divider' ? 'textures/bakaui/custom_bg_divider' : 'textures/bakaui/custom_bg_dark',
+        sliceTop: type === 'divider' ? 1 : 4,
+        sliceRight: 4,
+        sliceBottom: type === 'divider' ? 1 : 4,
+        sliceLeft: 4,
+        useNineSlice: true,
         iconTexture: 'textures/bakaui/trash',
         collectionIndex: isButton ? buttonCount++ : null,
         visible: true
@@ -690,7 +781,7 @@
         newEl.w = 300;
         newEl.h = 5;
         newEl.x = 10;
-        newEl.y = 40;
+        newEl.y = bodyHeight + 16;
       }
 
       newEl.x = snap(newEl.x);
@@ -706,7 +797,6 @@
     }
 
     function renderCanvas() {
-      // Remove old element nodes while preserving fixed template chrome
       canvas.querySelectorAll('.ui-element').forEach(n => n.remove());
 
       elements.forEach(el => {
@@ -723,21 +813,26 @@
         div.style.zIndex = el.layer;
         div.style.color = el.textColor || '#ffffff';
 
-        // 1. Background Texture Layer (uses 9-slice styling)
+        // 1. Corrected 9-Slice Background Layer (Zero Distortion on Dividers)
         const bgLayer = document.createElement('div');
         bgLayer.className = 'ui-bg-layer';
         bgLayer.style.opacity = el.alpha;
 
         if (el.texture) {
+          const t = el.sliceTop !== undefined ? el.sliceTop : (el.type === 'divider' ? 1 : 4);
+          const r = el.sliceRight !== undefined ? el.sliceRight : 4;
+          const b = el.sliceBottom !== undefined ? el.sliceBottom : (el.type === 'divider' ? 1 : 4);
+          const l = el.sliceLeft !== undefined ? el.sliceLeft : 4;
+
           bgLayer.style.borderStyle = 'solid';
-          bgLayer.style.borderWidth = '4px';
+          bgLayer.style.borderWidth = `${t}px ${r}px ${b}px ${l}px`;
           bgLayer.style.borderImageSource = `url('${el.texture}.png')`;
-          bgLayer.style.borderImageSlice = '4 fill';
+          bgLayer.style.borderImageSlice = `${t} ${r} ${b} ${l} fill`;
           bgLayer.style.borderImageRepeat = 'stretch';
         }
         div.appendChild(bgLayer);
 
-        // 2. Content Layer (Solid Text / Icon)
+        // 2. Content Layer
         const contentLayer = document.createElement('div');
         contentLayer.className = 'ui-content-layer';
 
@@ -820,7 +915,7 @@
           });
         }
 
-        // 4. Drag Engine
+        // 4. Drag Movement
         div.onpointerdown = (e) => {
           if (e.target.classList.contains('resize-handle')) return;
           e.stopPropagation();
@@ -972,7 +1067,7 @@
         inspectorContent.innerHTML = `
           <div class="prop-card">
             <div class="prop-card-title">Multi-Selection Action</div>
-            <p style="font-size: 12px; color: var(--text-muted);">${selectedIds.length} elements selected together. You can drag them simultaneously.</p>
+            <p style="font-size: 12px; color: var(--text-muted);">${selectedIds.length} elements selected together.</p>
             <button class="btn btn-danger" style="margin-top: 10px;" onclick="deleteSelected()">🗑 Delete Selected (${selectedIds.length})</button>
           </div>
         `;
@@ -993,6 +1088,12 @@
               <label>Preview Text</label>
               <input type="text" value="${el.text}" onchange="updateProp('text', this.value)">
             </div>
+            <div class="prop-group">
+              <label>Minecraft Color Code (§)</label>
+              <select onchange="updateTextColor(this.value)">
+                ${MC_COLORS.map(c => `<option value="${c.hex}" ${el.textColor.toLowerCase() === c.hex.toLowerCase() ? 'selected' : ''} style="color:${c.hex}; background:#1a1e26; font-weight:bold;">${c.name}</option>`).join('')}
+              </select>
+            </div>
             <div class="prop-row">
               <div class="prop-group">
                 <label>Padding Width</label>
@@ -1008,7 +1109,7 @@
               <input type="number" value="${el.iconSize || 32}" onchange="updateProp('iconSize', +this.value)">
             </div>
             <div class="prop-group">
-              <label>Button Collection Index (Required for Script API)</label>
+              <label>Button Collection Index</label>
               <input type="number" value="${el.collectionIndex}" onchange="updateProp('collectionIndex', +this.value)">
             </div>
           </div>
@@ -1053,7 +1154,7 @@
         </div>
 
         <div class="prop-card">
-          <div class="prop-card-title">Texture</div>
+          <div class="prop-card-title">Texture & 9-Slice Slices</div>
           <div class="prop-group">
             <label>BakaUI Preset</label>
             <select onchange="updateTexturePreset(this.value)">
@@ -1065,6 +1166,17 @@
             <label>Custom Texture Path</label>
             <input type="text" value="${el.texture}" onchange="updateTexturePreset(this.value)">
           </div>
+
+          <div class="prop-group">
+            <label>Slice Insets (Top / Right / Bottom / Left)</label>
+            <div class="prop-row-4">
+              <input type="number" title="Top" value="${el.sliceTop}" onchange="updateProp('sliceTop', +this.value)">
+              <input type="number" title="Right" value="${el.sliceRight}" onchange="updateProp('sliceRight', +this.value)">
+              <input type="number" title="Bottom" value="${el.sliceBottom}" onchange="updateProp('sliceBottom', +this.value)">
+              <input type="number" title="Left" value="${el.sliceLeft}" onchange="updateProp('sliceLeft', +this.value)">
+            </div>
+          </div>
+
           <div class="prop-group">
             <label>Texture Opacity</label>
             <div class="slider-row">
@@ -1082,9 +1194,18 @@
 
     function updateTexturePreset(path) {
       if (selectedIds.length === 0) return;
+      const preset = TEXTURE_PRESETS.find(p => p.path === path);
       selectedIds.forEach(id => {
         const el = elements.find(e => e.id === id);
-        if (el) el.texture = path;
+        if (el) {
+          el.texture = path;
+          if (preset && preset.slice) {
+            el.sliceTop = preset.slice[0];
+            el.sliceRight = preset.slice[1];
+            el.sliceBottom = preset.slice[2];
+            el.sliceLeft = preset.slice[3];
+          }
+        }
       });
       recordState();
       renderAll();
@@ -1123,10 +1244,37 @@
       updateInspector();
     }
 
-    // Generates the inner button panel that has collection_name: "form_buttons"
+    // Generates the customized Adaptive Body & Button Panel controls
     function generateButtonPanelJson() {
       const panelName = `my_custom_panel_${menuName}`;
+      const customBodyName = `my_form_body_${menuName}`;
+
       return {
+        [customBodyName]: {
+          "type": "panel",
+          "anchor_from": "top_middle",
+          "size": ["100%", bodyHeight],
+          "layer": 8,
+          "controls": [
+            {
+              "form_body_text": {
+                "type": "label",
+                "text": "#form_text",
+                "layer": 8,
+                "bindings": [
+                  {
+                    "binding_name": "#form_text"
+                  }
+                ]
+              }
+            },
+            {
+              "my_form_background@server_form.my_form_background_dark": {
+                "size": ["100% - 22px", "100%"]
+              }
+            }
+          ]
+        },
         [panelName]: {
           "type": "panel",
           "size": ["100%", "100%"],
@@ -1152,7 +1300,7 @@
                 }
               };
             }
-            // Images / Dividers
+            // Valid Image output for dividers and custom textures
             return {
               [`${el.name}`]: {
                 "type": "image",
@@ -1174,6 +1322,7 @@
     function generateDialogEntryJson() {
       const dialogId = `bakaui_${menuName}`;
       const btnPanelRef = `server_form.my_custom_panel_${menuName}`;
+      const customBodyRef = `server_form.my_form_body_${menuName}`;
       const cw = parseFloat(canvas.style.width) || 322.5;
       const ch = parseFloat(canvas.style.height) || 200;
 
@@ -1222,7 +1371,7 @@
                           }
                         },
                         {
-                          "my_form_body@server_form.my_form_body": {}
+                          [`my_form_body@${customBodyRef}`]: {}
                         },
                         {
                           [`button_panel@${btnPanelRef}`]: {}
@@ -1274,6 +1423,7 @@
       document.getElementById('export-modal').style.display = 'none';
     }
 
+    applyChromeSettings();
     recordState();
   </script>
 </body>
