@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft Bedrock JSON-UI Studio (BakaUI All-in-One)</title>
+  <title>Minecraft Bedrock JSON-UI Studio (Stack Panel Engine)</title>
   <link href="https://fonts.cdnfonts.com/css/minecraft-4" rel="stylesheet">
   <style>
     :root {
@@ -26,7 +26,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; user-select: none; }
     body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-    /* Top Toolbar */
+    /* Header */
     header {
       background-color: var(--bg-panel);
       border-bottom: 1px solid var(--border-color);
@@ -81,7 +81,7 @@
       font-size: 11px;
     }
 
-    /* Workspace */
+    /* Workspace Layout */
     .app-container { display: flex; flex: 1; height: calc(100vh - 52px); overflow: hidden; }
 
     /* Left Sidebar */
@@ -164,7 +164,7 @@
       image-rendering: pixelated;
     }
 
-    /* Subtle Grid Overlay */
+    /* Subtle Grid */
     #canvas-wrapper.grid-on {
       background-image: 
         linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
@@ -172,7 +172,7 @@
       background-size: var(--grid-size) var(--grid-size);
     }
 
-    /* Template Chrome Overlay (Simulates BakaUI Form Structure 1:1) */
+    /* Template Chrome Simulation */
     .template-chrome {
       position: absolute;
       inset: 0;
@@ -203,7 +203,7 @@
       image-rendering: pixelated;
     }
     
-    /* Stacked Close Button with In-Game Background */
+    /* Stacked Close Button */
     .chrome-close {
       position: absolute;
       top: -20px;
@@ -265,9 +265,9 @@
       position: relative;
       z-index: 2;
       font-family: 'Minecraft', monospace;
-      font-weight: 400; /* Normal regular font */
+      font-weight: 400;
       font-size: 11px;
-      color: #ffffff; /* Centered white */
+      color: #ffffff;
       text-align: center;
       text-shadow: 1px 1px 0px rgba(0,0,0,0.85);
       line-height: 1.3;
@@ -276,7 +276,7 @@
       width: 100%;
     }
 
-    /* Button Workspace Container (Matches Button Panel relative origin) */
+    /* Stack Container Workspace */
     #button-workspace {
       position: absolute;
       left: 0;
@@ -436,7 +436,7 @@
       border: 1px solid var(--border-color);
       border-radius: 4px;
       resize: vertical;
-      height: 220px;
+      height: 380px;
       user-select: text;
     }
   </style>
@@ -445,7 +445,7 @@
 
   <!-- Header -->
   <header>
-    <div class="brand">⛏ Bedrock JSON-UI Studio</div>
+    <div class="brand">⛏ Bedrock JSON-UI Studio (Stack Panel Engine)</div>
     <div class="toolbar-actions">
       <!-- Undo / Redo -->
       <button class="btn" id="btn-undo" onclick="undo()" title="Undo (Ctrl+Z)">↩ Undo</button>
@@ -534,7 +534,7 @@
       </div>
 
       <div class="sidebar-section" style="padding-bottom: 4px;">
-        <div class="section-title">Hierarchy & Layers <small style="font-size:10px; font-weight:normal;">(Shift/Ctrl to Multi-select)</small></div>
+        <div class="section-title">Hierarchy & Layers <small style="font-size:10px; font-weight:normal;">(Shift/Ctrl: Multi-select | Ctrl+D: Clone)</small></div>
       </div>
 
       <div class="tree-view" id="element-tree"></div>
@@ -543,7 +543,7 @@
     <!-- Center Viewport with Background -->
     <div class="viewport" id="viewport">
       <div id="canvas-wrapper" class="grid-on" style="width: 322.5px; height: 200px;">
-        <!-- Fixed BakaUI Chrome Overlay -->
+        <!-- Fixed BakaUI Chrome Template overlay -->
         <div class="template-chrome">
           <div class="chrome-label" id="disp-chrome-label">§fCustom Shop§r</div>
           <div class="chrome-divider"></div>
@@ -554,14 +554,14 @@
             <div class="chrome-close-icon"></div>
           </div>
           
-          <!-- Form Body Container -->
+          <!-- Centered Body with Normal Font -->
           <div class="chrome-body-container" id="disp-body-container">
             <div class="chrome-body-bg"></div>
             <div class="chrome-body-text" id="disp-body-text">Choose an item from the list below:</div>
           </div>
         </div>
 
-        <!-- Button Workspace matches in-game stack container position -->
+        <!-- Button Workspace container -->
         <div id="button-workspace"></div>
       </div>
     </div>
@@ -588,12 +588,8 @@
       </div>
       <div class="modal-body">
         <div class="prop-group">
-          <label class="section-title">1. Custom Button Panel Definition (Place at bottom of server_form.json)</label>
-          <textarea class="code-box" id="code-btn-preview" readonly></textarea>
-        </div>
-        <div class="prop-group">
-          <label class="section-title">2. Dialog Panel Entry (Place inside long_form.controls array)</label>
-          <textarea class="code-box" id="code-dialog-preview" readonly></textarea>
+          <label class="section-title">Complete Stack Panel JSON Output</label>
+          <textarea class="code-box" id="code-preview" readonly></textarea>
         </div>
       </div>
     </div>
@@ -609,11 +605,11 @@
       <div class="modal-body">
         <div class="prop-group">
           <label class="section-title">1. Paste at the bottom of server_form.json (outside long_form)</label>
-          <textarea class="code-box" id="code-btn-panel" readonly></textarea>
+          <textarea class="code-box" id="code-btn-panel" style="height: 180px;" readonly></textarea>
         </div>
         <div class="prop-group">
           <label class="section-title">2. Paste inside long_form.controls array in server_form.json</label>
-          <textarea class="code-box" id="code-dialog-panel" readonly></textarea>
+          <textarea class="code-box" id="code-dialog-panel" style="height: 180px;" readonly></textarea>
         </div>
       </div>
     </div>
@@ -662,6 +658,7 @@
       { code: "§g", name: "§g Minecoin Gold", hex: "#ddd605" }
     ];
 
+    // Standard 3:3 default nine-slice
     const TEXTURE_PRESETS = [
       { name: "Button Light", path: "textures/bakaui/button_light", slice: [3, 3, 3, 3] },
       { name: "Button Light Hover", path: "textures/bakaui/button_lighthover", slice: [3, 3, 3, 3] },
@@ -721,6 +718,7 @@
       document.getElementById('btn-redo').disabled = (historyIndex >= historyStack.length - 1);
     }
 
+    // Keyboard Shortcuts (Ctrl+Z, Ctrl+Y, Ctrl+D Duplicate)
     window.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
@@ -842,8 +840,8 @@
       document.getElementById('body-settings-wrapper').style.display = enableBody ? 'flex' : 'none';
       document.getElementById('chk-enable-body').checked = enableBody;
 
-      // Adjust workspace top origin to match in-game button_panel position
-      const wsTop = enableBody ? (8 + bodyHeight + 2) : 8;
+      // Align button workspace directly below body container
+      const wsTop = enableBody ? (8 + bodyHeight + 4) : 8;
       workspace.style.top = wsTop + 'px';
 
       document.getElementById('inp-form-binding').value = titleFilter;
@@ -861,7 +859,7 @@
         name: isButton ? `button_${buttonCount}` : `${type}_${elements.length + 1}`,
         type,
         x: 16,
-        y: 16, // Relative to button_panel workspace origin!
+        y: 8,
         w: 64,
         h: 64,
         paddingW: 69,
@@ -1001,6 +999,7 @@
                 el.w = nextW;
                 el.h = nextH;
 
+                // Sync padding with dimensions automatically
                 el.paddingW = nextW + 5;
                 el.paddingH = nextH + 5;
 
@@ -1060,6 +1059,9 @@
               if (targetEl && init) {
                 let nextX = snap(init.x + deltaX);
                 let nextY = snap(init.y + deltaY);
+
+                nextX = Math.max(0, Math.min(canvas.clientWidth - targetEl.w, nextX));
+                nextY = Math.max(0, Math.min(canvas.clientHeight - targetEl.h, nextY));
 
                 targetEl.x = nextX;
                 targetEl.y = nextY;
@@ -1359,47 +1361,90 @@
       updateInspector();
     }
 
-    // 1. Button Panel Definition for the root of server_form.json
+    // Stack Panel Exporter: Groups elements into horizontal row stack_panels automatically
     function generateButtonPanelJson() {
       const panelName = `my_custom_panel_${menuName}`;
-      return {
-        [panelName]: {
-          "type": "panel",
-          "size": ["100%", "100%"],
-          "collection_name": "form_buttons",
-          "controls": elements.map((el, i) => {
-            if (el.type === 'custom_button') {
-              return {
-                [`${el.name}@server_form.custom_button`]: {
-                  "offset": [el.x, el.y],
-                  "$button_size": [el.w, el.h],
-                  "$padding_size": [el.paddingW || (el.w + 5), el.paddingH || (el.h + 5)],
-                  "$icon_size": [el.iconSize || 32, el.iconSize || 32],
-                  ...(el.texture ? { "$default_button_texture": el.texture } : {}),
-                  "collection_index": el.collectionIndex,
-                  "anchor_from": "top_left",
-                  "anchor_to": "top_left"
-                }
-              };
-            }
+
+      // 1. Sort elements by Y coordinate first, then X
+      const sorted = [...elements].sort((a, b) => a.y - b.y || a.x - b.x);
+
+      // 2. Cluster into distinct horizontal row tiers
+      const rows = [];
+      sorted.forEach(el => {
+        let placed = false;
+        for (const row of rows) {
+          const avgY = row.reduce((sum, item) => sum + item.y, 0) / row.length;
+          if (Math.abs(el.y - avgY) <= 18) { // Elements within 18px belong to same row
+            row.push(el);
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) rows.push([el]);
+      });
+
+      // 3. Construct nested stack_panels matching BakaUI engine architecture
+      const rowControls = rows.map((rowItems, rowIndex) => {
+        // Sort items left-to-right inside the row
+        rowItems.sort((a, b) => a.x - b.x);
+
+        const itemsControls = rowItems.map(el => {
+          if (el.type === 'custom_button') {
             return {
-              [`${el.name}`]: {
-                "type": "image",
-                "size": [el.w, el.h],
-                "offset": [el.x, el.y],
-                "layer": el.layer,
-                ...(el.alpha !== 1.0 ? { "alpha": el.alpha } : {}),
-                "texture": el.texture || "textures/bakaui/custom_bg_dark",
-                "anchor_from": "top_left",
-                "anchor_to": "top_left"
+              [`${el.name}@server_form.custom_button`]: {
+                "$button_size": [el.w, el.h],
+                "$padding_size": [el.paddingW || (el.w + 5), el.paddingH || (el.h + 5)],
+                "$icon_size": [el.iconSize || 32, el.iconSize || 32],
+                ...(el.texture ? { "$default_button_texture": el.texture } : {}),
+                "collection_index": el.collectionIndex
               }
             };
-          })
+          }
+          return {
+            [`${el.name}`]: {
+              "type": "image",
+              "size": [el.w, el.h],
+              "layer": el.layer,
+              ...(el.alpha !== 1.0 ? { "alpha": el.alpha } : {}),
+              "texture": el.texture || "textures/bakaui/custom_bg_dark"
+            }
+          };
+        });
+
+        // Single item in row vs multiple items in row
+        if (rows.length === 1) {
+          return itemsControls;
+        }
+
+        return {
+          [`row_stack_${rowIndex}`]: {
+            "type": "stack_panel",
+            "size": ["100%", "100%c"],
+            "orientation": "horizontal",
+            "anchor_from": "center",
+            "anchor_to": "center",
+            "collection_name": "form_buttons",
+            "controls": itemsControls
+          }
+        };
+      });
+
+      const finalControls = rows.length === 1 ? rowControls[0] : rowControls;
+
+      return {
+        [panelName]: {
+          "type": "stack_panel",
+          "size": ["100%", "100%"],
+          "orientation": rows.length === 1 ? "horizontal" : "vertical",
+          "anchor_from": "center",
+          "anchor_to": "center",
+          "collection_name": "form_buttons",
+          "controls": finalControls
         }
       };
     }
 
-    // 2. Dialog Definition inside long_form.controls
+    // Dialog Definition inside long_form.controls
     function generateDialogEntryJson() {
       const dialogId = `bakaui_${menuName}`;
       const btnPanelRef = `server_form.my_custom_panel_${menuName}`;
@@ -1487,8 +1532,7 @@
       const btnPanel = generateButtonPanelJson();
       const dialogEntry = generateDialogEntryJson();
 
-      document.getElementById('code-btn-preview').value = JSON.stringify(btnPanel, null, 2);
-      document.getElementById('code-dialog-preview').value = JSON.stringify(dialogEntry, null, 2);
+      document.getElementById('code-preview').value = JSON.stringify({ ...dialogEntry, ...btnPanel }, null, 2);
       document.getElementById('preview-modal').style.display = 'flex';
     }
 
